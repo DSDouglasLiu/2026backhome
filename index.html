@@ -237,59 +237,112 @@
 </div>
 
 <script>
+  // ==========================================
+  // 1. 設定與全域變數
+  // ==========================================
+  
+  // 請確認這是你最新部署的 Web App URL (結尾是 /exec)
+  // 注意：每次修改後端程式碼，都必須「建立新部署 (New Version)」網址才會更新邏輯
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzjKiKHUA4uO29bTj80_pRRbGdgbsBMsKmkJoTy31ZUU4cuy-Gcx3Oafb-FRaXBBPjT/exec';
+  
   let currentUser = null;
   let currentSheetData = null;
   let activeTarget = null; // { carNo, colName }
-  const SCRIPT_URL = https://script.google.com/macros/s/AKfycbzjKiKHUA4uO29bTj80_pRRbGdgbsBMsKmkJoTy31ZUU4cuy-Gcx3Oafb-FRaXBBPjT/exec
-  // === Auth ===
+
+  // ==========================================
+  // 2. 核心通訊層 (取代 google.script.run)
+  // ==========================================
+  
+  /**
+   * 通用 API 呼叫函式
+   * 使用 fetch 發送 POST 請求給 GAS
+   */
+  async function callApi(action, data = {}) {
+    // 準備傳送的資料包
+    const payload = {
+      action: action,
+      userEmail: currentUser ? currentUser.email : '',
+      ...data
+    };
+
+    console.log(`[API Call] ${action}`, payload);
+
+    try {
+      // 使用 fetch 發送請求
+      // 注意：GAS doPost 雖然支援 CORS，但建議不要設定 'Content-Type': 'application/json'
+      // 因為這會觸發 Preflight (OPTIONS) 檢查，導致 GAS 報錯。
+      // 直接傳送 Stringified JSON，瀏覽器會預設為 text/plain，GAS 後端一樣讀得到。
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      console.log(`[API Result]`, result);
+      return result;
+
+    } catch (err) {
+      console.error('Fetch Error:', err);
+      return { ok: false, msg: '網路連線失敗或後端無回應' };
+    }
+  }
+
+  // ==========================================
+  // 3. Google 登入處理
+  // ==========================================
+  
   function handleCredentialResponse(response) {
-    const idToken = response.credential;
-    const payload = JSON.parse(atob(idToken.split('.')[1]));
-    currentUser = { email: payload.email, token: idToken }; 
-    
-    document.getElementById('loading').style.display = 'block';
-    // 呼叫後端 API: verify
-    google.script.run
-      .withSuccessHandler(res => {
+    try {
+      const idToken = response.credential;
+      // 解析 JWT Token 取得使用者資訊
+      const base64Url = idToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      const payload = JSON.parse(jsonPayload);
+      
+      // 暫存使用者資訊
+      currentUser = { 
+        email: payload.email, 
+        name: payload.name, 
+        picture: payload.picture,
+        token: idToken 
+      }; 
+
+      console.log('User detected:', currentUser.email);
+      document.getElementById('loading').style.display = 'block';
+
+      // 呼叫後端 verify 檢查權限 (使用新的 fetch callApi)
+      callApi('verify').then(res => {
         document.getElementById('loading').style.display = 'none';
-        if(res.ok) {
+        
+        if (res.ok) {
           currentUser.permission = res.permission;
+          console.log('Permission:', res.permission);
+
+          // 切換畫面
           document.getElementById('loginView').style.display = 'none';
           document.getElementById('appView').style.display = 'block';
           
-          if(['ADMIN', 'LEADER'].includes(res.permission)) {
-            document.getElementById('btnAddCol').style.display = 'inline-block';
+          // 根據權限顯示按鈕
+          if (['ADMIN', 'LEADER'].includes(res.permission)) {
+             document.getElementById('btnAddCol').style.display = 'inline-block';
           }
+
+          // 載入資料
           loadData();
         } else {
-          alert('登入失敗: ' + res.msg);
+          alert('登入失敗: ' + (res.msg || '未知錯誤'));
+          currentUser = null; // 清除失敗的登入
         }
-      })
-      .withFailureHandler(err => {
-         document.getElementById('loading').style.display = 'none';
-         alert('系統錯誤: ' + err);
-      })
-      .doGet({ parameter: { action: 'verify', userEmail: currentUser.email } }); 
-      // 注意: google.script.run 只能呼叫 Server function，
-      // 這裡為了相容 doGet 路由架構，我們直接呼叫包裝好的 Controller 
-      // 建議: 實作一個 runApi function 在後端專門給 google.script.run 呼叫
-  }
-  
-  // 修正: 為了讓 google.script.run 順利運作，建議在後端加一個 function runApi(req)
-  // 如果不行，這裡改用 fetch WebApp URL (需發布為 Web App)
-  // 為了演示方便，以下假設您會將後端 doPost/doGet 邏輯封裝好。
-  // **實戰建議**: 修改 code.gs 增加一個 `function apiHandler(req) { ... }` 供前端直接呼叫
-  
-  function callApi(action, data) {
-    const payload = { ...data, action, userEmail: currentUser?.email };
-    
-    return new Promise((resolve, reject) => {
-       // 使用 google.script.run (推薦)
-       google.script.run
-         .withSuccessHandler(resolve)
-         .withFailureHandler(reject)
-         .doPost({ postData: { contents: JSON.stringify(payload) } });
-    });
+      });
+
+    } catch (e) {
+      console.error(e);
+      alert('登入解析發生錯誤');
+    }
   }
 
   function logout() {
@@ -297,12 +350,15 @@
     location.reload();
   }
 
-  // === Data Loading ===
+  // ==========================================
+  // 4. 資料載入與渲染
+  // ==========================================
+
   function loadData() {
     const sheetName = document.getElementById('sheetSelector').value;
     document.getElementById('loading').style.display = 'block';
     
-    callApi('getData', { sheetName }).then(res => {
+    callApi('getData', { sheetName: sheetName }).then(res => {
       document.getElementById('loading').style.display = 'none';
       if(res.ok) {
         currentSheetData = res;
@@ -310,13 +366,9 @@
       } else {
         alert('讀取失敗: ' + res.msg);
       }
-    }).catch(e => {
-       document.getElementById('loading').style.display = 'none';
-       alert('連線錯誤: ' + e);
     });
   }
 
-  // === Rendering ===
   function render(data) {
     const { headers, rows } = data;
     const container = document.getElementById('cardContainer');
@@ -327,8 +379,6 @@
     thead.innerHTML = '';
     tbody.innerHTML = '';
 
-    // 定義哪些欄位是純資訊 (不可點擊)
-    // 依據新的規格：編號, 區域車次編號, 車號, 備註
     const infoCols = ['編號', '區域車次編號', '車號', '備註'];
 
     // 1. Render Table Header
@@ -350,7 +400,6 @@
       card.className = 'card';
       let gridHtml = '';
       
-      // Card Header: 車號 + 備註
       card.innerHTML = `
         <div class="card-head">
           <span style="font-size:1.2rem; color:var(--color-brand-600)">${carNo}</span>
@@ -365,14 +414,10 @@
         const isDynamic = h.isDynamic;
         const isInfo = infoCols.includes(h.name);
         
-        // Render Cell
-        // 若有值顯示值，若無值且非資訊欄位顯示 ⭕ (Table)
-        // 手機版按鈕：顯示欄位名稱 + 值
         const cellClass = `btn-status ${val ? 'done' : ''} ${val==='-' || val==='Skip' ? 'skip' : ''} ${isDynamic ? 'is-dynamic' : ''}`;
-        
         const clickAttr = isInfo ? '' : `onclick="openSheet('${carNo}', '${h.name}')"`;
         
-        // Grid Item (Mobile) - 只顯示操作按鈕
+        // Grid Item (Mobile)
         if (!isInfo) {
           gridHtml += `
             <div class="${cellClass}" ${clickAttr}>
@@ -384,7 +429,7 @@
         // Table Cell (Desktop)
         const td = document.createElement('td');
         if(!isInfo) {
-          td.innerHTML = `<div class="${cellClass}" ${clickAttr}><span>${val}</span></div>`;
+          td.innerHTML = `<div class="${cellClass}" ${clickAttr}><span>${val || ''}</span></div>`;
         } else {
           td.textContent = val;
         }
@@ -397,14 +442,20 @@
     });
   }
 
-  // === Action Logic ===
+  // ==========================================
+  // 5. 操作邏輯
+  // ==========================================
+
   function openSheet(carNo, colName) {
-    if(currentUser.permission === 'VIEWER') return; 
+    // 簡單防呆
+    if(!currentUser || currentUser.permission === 'VIEWER') {
+      // 這裡可以選擇是否要提示，或乾脆沒反應
+      return; 
+    }
 
     activeTarget = { carNo, colName };
     document.getElementById('sheetTitle').textContent = `${carNo} : ${colName}`;
     
-    // 設定目前時間
     const now = new Date();
     const hh = String(now.getHours()).padStart(2,'0');
     const mm = String(now.getMinutes()).padStart(2,'0');
@@ -439,10 +490,15 @@
     if(name) {
       const sheetName = document.getElementById('sheetSelector').value;
       document.getElementById('loading').style.display = 'block';
+      
       callApi('addColumn', { sheetName, colName: name }).then(res => {
         document.getElementById('loading').style.display = 'none';
-        if(res.ok) { alert('新增成功'); loadData(); }
-        else { alert('失敗: ' + res.msg); }
+        if(res.ok) { 
+          alert('新增成功'); 
+          loadData(); 
+        } else { 
+          alert('失敗: ' + res.msg); 
+        }
       });
     }
   }
@@ -464,6 +520,7 @@
     callApi(actType, payload).then(res => {
       document.getElementById('loading').style.display = 'none';
       if(res.ok) {
+        // 成功後重新讀取資料以更新畫面
         loadData(); 
       } else {
         alert('Error: ' + res.msg);
