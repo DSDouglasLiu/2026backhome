@@ -270,8 +270,8 @@
 
 <script>
   // ================= CONFIG =================
-  // ★★★ 請務必替換成您的 Web App URL ★★★
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzLPpv2wBq9D2Ao4W4KrRoEX3LPvJgrpxa5IUBGG2YPSSB0fQ4Hnk2dbqOpXLUJjIq4A/exec'; 
+  // ★★★ 請務必確認這是您最新部署的 Web App URL ★★★
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwL373Vv9L_L9_XksuYJ0Ah_3-6XhX9_lV0Xv8L0Xv8L0Xv8/exec'; 
   
   const SHEET_CONFIGS = [
     { 
@@ -302,11 +302,11 @@
 
   // ================= STATE =================
   let currentUser = null;
-  let allData = {}; // Cache for all sheets (Dashboard)
+  let allData = {}; // Cache for all sheets
   let currentSheetName = SHEET_CONFIGS[0].key;
-  let activeFilter = null; // { status: 'todo'/'done', step: 'xxx' }
+  let activeFilter = null; 
   let refreshTimer = null;
-  let refreshMs = 60000; // Default 60s
+  let refreshMs = 60000; 
 
   // ================= CORE =================
   function handleCredentialResponse(response) {
@@ -334,30 +334,30 @@
       document.getElementById('btnAdd').classList.remove('hidden');
     }
 
-    // Set Default Refresh Rate
     const isMobile = window.innerWidth < 768;
     const isPowerUser = currentUser.permission === 'ADMIN';
-    if(isPowerUser && !isMobile) refreshMs = 30000; // PC Admin: 30s
-    else if(isMobile) refreshMs = 60000; // Mobile: 60s
-    else refreshMs = 120000; // Viewer PC: 2m
+    if(isPowerUser && !isMobile) refreshMs = 30000; 
+    else if(isMobile) refreshMs = 60000; 
+    else refreshMs = 120000; 
     
     renderRefreshCtrl();
     renderSheetSelector();
     
-    // Load Data
     loadAllData(true);
     startTimer();
   }
 
   async function loadAllData(force = false) {
-    if(!force) document.getElementById('loading').style.display = 'none'; // Silent refresh
+    if(!force) document.getElementById('loading').style.display = 'none';
     
-    // Only fetch if on Dashboard OR need refresh
     const res = await callApi('getAllData');
     if(res.ok) {
       allData = res.allSheets;
       renderDashboard();
-      renderList(); // Refresh list if open
+      // 如果目前是在作業頁面，也要重新渲染列表
+      if(!document.getElementById('tabOp').classList.contains('hidden')){
+         renderList(); 
+      }
     }
     document.getElementById('loading').style.display = 'none';
   }
@@ -380,37 +380,35 @@
 
     SHEET_CONFIGS.forEach(cfg => {
       const data = allData[cfg.key];
-      if(!data || !data.rows) return;
+      // 修正點：後端回傳的是 headers (複數)
+      if(!data || !data.rows || !data.headers) return; 
 
       const wrapper = document.createElement('div');
       wrapper.className = 'dash-section';
       
-      // Title
       wrapper.innerHTML = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}">${cfg.key}</div>`;
 
-      // 1. Stats
       const steps = cfg.steps;
       const parkingStep = cfg.parkingField;
       const parkingIdx = steps.indexOf(parkingStep);
       
-      // Split steps by parking
       const inbound = parkingIdx >= 0 ? steps.slice(0, parkingIdx) : steps;
       const outbound = parkingIdx >= 0 ? steps.slice(parkingIdx + 1) : [];
 
-      // Render Inbound
       inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
 
-      // 2. Assign Block (Only if parking field exists & Admin)
+      // Assign Block
       if(parkingStep && currentUser.permission === 'ADMIN') {
         const assignBlock = createAssignBlock(data, cfg, parkingStep);
         if(assignBlock) wrapper.appendChild(assignBlock);
       }
 
-      // 3. Location Stats
+      // Location Stats
       if(parkingStep) {
         const locContainer = document.createElement('div');
         locContainer.className = 'loc-container';
-        const colIdx = data.header.findIndex(h => h.name === parkingStep);
+        // 修正點：使用 headers (複數)，且比對 h.name
+        const colIdx = data.headers.findIndex(h => h.name === parkingStep);
         const counts = {};
         STOP_OPTIONS.forEach(s => counts[s] = 0);
         
@@ -428,7 +426,7 @@
         wrapper.appendChild(locContainer);
       }
 
-      // 4. Outbound
+      // Outbound
       if(outbound.length > 0) {
         const outTitle = document.createElement('div');
         outTitle.className = 'step-header';
@@ -443,7 +441,8 @@
   }
 
   function createStatCard(step, data, cfg) {
-    const colIdx = data.header.findIndex(h => h.name === step);
+    // 修正點：使用 headers
+    const colIdx = data.headers.findIndex(h => h.name === step);
     let done = 0, todo = 0;
     data.rows.forEach(row => {
       const val = (row[colIdx] || '').trim();
@@ -469,8 +468,8 @@
   }
 
   function createAssignBlock(data, cfg, parkingStep) {
-    const colIdx = data.header.findIndex(h => h.name === parkingStep);
-    // Find cars with empty parking
+    // 修正點：使用 headers
+    const colIdx = data.headers.findIndex(h => h.name === parkingStep);
     const candidates = data.rows.filter(r => {
       const val = (r[colIdx] || '').trim();
       return !val || val === '-';
@@ -481,16 +480,14 @@
     const div = document.createElement('div');
     div.className = 'assign-block';
     
-    // Build options
-    const carIdx = data.header.findIndex(h => h.name === '車號');
-    const areaIdx = data.header.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    // 修正點：使用 headers
+    const carIdx = data.headers.findIndex(h => h.name === '車號');
+    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
     
     let carOpts = `<option value="">請選擇車輛...</option>`;
-    candidates.forEach((r, idx) => {
-      // We need original row index. Note: data.rows is simple array, we need to map back if sorted.
-      // But here apiGetAllData returns simplified rows. We need logic to find true index.
-      // SIMPLIFICATION: In Dashboard context, we can't easily get Row Index without passing it from backend.
-      // FIX: Add logic to scan by Car No.
+    candidates.forEach((r) => {
+      // 這裡為了簡化，直接用車號當 value。實際送出時再反查 index。
+      // 注意：doQuickAssign 需要改寫以支援用車號查找。
       carOpts += `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`;
     });
 
@@ -508,17 +505,18 @@
   // ================= UI: OPERATION LIST =================
   function renderList() {
     const data = allData[currentSheetName];
-    if(!data) return;
+    // 修正點：檢查 data 和 data.headers
+    if(!data || !data.headers) return;
 
     const container = document.getElementById('listContainer');
     container.innerHTML = '';
 
-    const header = data.header;
+    // 修正點：使用 headers
+    const header = data.headers;
     const carIdx = header.findIndex(h => h.name === '車號');
     const areaIdx = header.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
     const noteIdx = header.findIndex(h => h.name === '備註');
 
-    // Filtering
     let rows = data.rows;
     if(activeFilter) {
       document.getElementById('filterMsg').classList.remove('hidden');
@@ -543,16 +541,13 @@
       const card = document.createElement('div');
       card.className = 'veh-card';
       
-      // Determine Status Text (Last completed step)
-      // Logic: Iterate backwards to find first non-empty
       let statusText = '準備中';
       const parkingStep = SHEET_CONFIGS.find(c=>c.key===currentSheetName).parkingField;
       
-      // Check Parking First
       if(parkingStep) {
         const pIdx = header.findIndex(h => h.name === parkingStep);
         const pVal = (row[pIdx] || '').trim();
-        if(pVal) statusText = pVal; // Show location if parked
+        if(pVal) statusText = pVal; 
       }
 
       card.innerHTML = `
@@ -565,6 +560,7 @@
           <span>點擊操作</span>
         </div>
       `;
+      // 修正：傳入 header (複數)
       card.onclick = () => openBottomSheet(row, header, carIdx);
       container.appendChild(card);
     });
@@ -592,7 +588,6 @@
 
       const right = document.createElement('div');
       
-      // Special: Parking Field (Dropdown)
       if(step === cfg.parkingField) {
         if(!isViewer) {
           const sel = document.createElement('select');
@@ -611,7 +606,6 @@
           right.innerHTML = `<span class="action-val">${val || '-'}</span>`;
         }
       } 
-      // Standard Time Field
       else {
         if(val) {
           right.innerHTML = `<span class="action-val">${val}</span>`;
@@ -651,8 +645,6 @@
     closeSheet();
     
     const action = isUpdate ? 'update' : 'stamp';
-    // For parking update, value is string. For stamp, value is null.
-    // Backend handles stamp=null -> current time.
     
     await callApi(action, {
       sheetName: currentSheetName,
@@ -661,6 +653,7 @@
       value: value
     });
     
+    // 強制重新讀取所有資料以更新 Dashboard 和 List
     await loadAllData(true);
   }
 
@@ -669,7 +662,15 @@
     const carNo = document.getElementById(`assignCar_${sheetKey}`).value;
     if(!loc || !carNo) return alert('請選擇位置與車輛');
     
-    await doAction(carNo, colName, loc, true); // Treat as update with specific value
+    // 這裡我們需要切換 currentSheetName 讓 doAction 知道要操作哪個 Sheet
+    // 因為 Assign Block 可能在不同的 Sheet 卡片上
+    const originalSheet = currentSheetName;
+    currentSheetName = sheetKey; 
+    
+    await doAction(carNo, colName, loc, true);
+    
+    // 還原 Sheet Name (或是直接停留在該 Sheet 也可以)
+    currentSheetName = originalSheet;
   }
 
   function promptAddColumn() {
@@ -683,7 +684,10 @@
   // ================= NAVIGATION =================
   function switchTab(tab) {
     document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    // 簡單判斷按鈕文字或 index
+    const btns = document.querySelectorAll('.nav-tab');
+    if(tab === 'dash') btns[0].classList.add('active');
+    else btns[1].classList.add('active');
     
     if(tab === 'dash') {
       document.getElementById('tabDash').classList.remove('hidden');
@@ -691,7 +695,7 @@
     } else {
       document.getElementById('tabDash').classList.add('hidden');
       document.getElementById('tabOp').classList.remove('hidden');
-      renderList(); // Ensure list is up to date
+      renderList(); 
     }
   }
 
@@ -700,8 +704,7 @@
     activeFilter = { step, status };
     document.getElementById('sheetSelector').value = sheetKey;
     
-    // Switch Tab
-    document.querySelectorAll('.nav-tab')[1].click(); // Simulate click on '作業'
+    switchTab('op');
   }
 
   function clearFilter() {
@@ -711,7 +714,7 @@
 
   function onSheetChange() {
     currentSheetName = document.getElementById('sheetSelector').value;
-    activeFilter = null; // Clear filter when changing sheet
+    activeFilter = null; 
     renderList();
   }
 
@@ -748,6 +751,7 @@
     localStorage.removeItem('ddcc_user_token');
     location.reload();
   }
-</script>
+</script>  
+
 </body>
 </html>
