@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>2026 車流退場作業系統</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    /* =========================================
+       1. Design Tokens (整合 token.css & Primitive CSV)
+       ========================================= */
+    :root {
+      /* Palette */
+      --color-brand-500: #3B82F6;
+      --color-brand-600: #2563EB;
+      --color-success-500: #22C55E;
+      --color-success-100: #dcfce7;
+      --color-warning-500: #F59E0B;
+      --color-bg-app-shell: #f8fafc;
+      --color-surface: #ffffff;
+      --color-text-main: #0f172a;
+      --color-text-sub: #64748b;
+      --color-border: #e2e8f0;
+      
+      /* Spacing & Radius */
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      
+      /* Layers (Z-Index) */
+      --layer-tabbar: 100;
+      --layer-overlay: 1000;
+      --layer-bottom-sheet: 1100;
+    }
+
+    /* =========================================
+       2. App Shell (整合 style.css)
+       ========================================= */
+    body { 
+      margin: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: var(--color-bg-app-shell); 
+      color: var(--color-text-main); 
+      padding-bottom: 80px; /* Safe area for scrolling */
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: var(--spacing-md); }
+    
+    .header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      margin-bottom: var(--spacing-md); 
+      background: var(--color-surface);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    select { 
+      padding: 8px 12px; border: 1px solid var(--color-border); 
+      border-radius: 6px; font-size: 1rem; max-width: 200px;
+    }
+
+    button.nav-btn {
+      padding: 8px 12px; background: white; border: 1px solid var(--color-border);
+      border-radius: 6px; cursor: pointer; color: var(--color-text-main);
+    }
+
+    /* =========================================
+       3. RWD Views (Card vs Table)
+       ========================================= */
+    .view-card { display: block; }
+    .view-table { display: none; }
+    
+    @media (min-width: 768px) {
+      .view-card { display: none; }
+      .view-table { display: block; }
+    }
+
+    /* Card Style (Mobile) */
+    .card { 
+      background: var(--color-surface); 
+      border-radius: var(--radius-md); 
+      padding: var(--spacing-md); 
+      margin-bottom: 12px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+    .card-head { 
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-weight: 700; font-size: 1.1rem; 
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 8px;
+    }
+    .status-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+      gap: 8px; 
+    }
+
+    /* Table Style (Desktop) */
+    table { width: 100%; border-collapse: collapse; background: var(--color-surface); }
+    th, td { border: 1px solid var(--color-border); padding: 10px; text-align: center; font-size: 0.9rem; }
+    th { background: #f1f5f9; font-weight: 600; white-space: nowrap; }
+
+    /* =========================================
+       4. Status Components
+       ========================================= */
+    .btn-status { 
+      padding: 8px 4px; 
+      border-radius: 8px; 
+      border: 1px solid var(--color-border); 
+      background: #f8fafc; 
+      font-size: 0.85rem; 
+      cursor: pointer; 
+      text-align: center;
+      min-height: 48px; /* Touch friendly */
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-status strong { display: block; font-size: 0.75rem; color: var(--color-text-sub); margin-bottom: 2px; }
+    .btn-status span { font-weight: 600; font-size: 0.9rem; }
+    
+    /* State: Done */
+    .btn-status.done { 
+      background: var(--color-success-100); 
+      color: #166534; 
+      border-color: #bbf7d0; 
+    }
+    /* State: Skip */
+    .btn-status.skip { 
+      background: #f1f5f9; 
+      color: #94a3b8; 
+      text-decoration: line-through; 
+    }
+    /* State: Dynamic (Temporary) */
+    .is-dynamic { 
+      border: 2px dashed var(--color-warning-500); 
+      background: #fffbeb;
+    }
+
+    /* =========================================
+       5. Bottom Sheet & Overlays
+       ========================================= */
+    .overlay { 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); 
+      display: none; z-index: var(--layer-overlay); 
+      backdrop-filter: blur(2px);
+    }
+    .bottom-sheet { 
+      position: fixed; bottom: -100%; left: 0; right: 0; 
+      background: var(--color-surface); 
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0; 
+      padding: 24px; 
+      transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+      z-index: var(--layer-bottom-sheet); 
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    }
+    .sheet-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
+    .sheet-actions { display: flex; flex-direction: column; gap: 12px; }
+    
+    .btn-lg { 
+      padding: 14px; border-radius: 12px; border: none; 
+      font-size: 1rem; font-weight: 600; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-primary { background: var(--color-brand-500); color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
+    .btn-outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-main); }
+    .btn-ghost { background: transparent; color: var(--color-text-sub); }
+
+    /* Loading */
+    .loading { 
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+      background: rgba(0,0,0,0.8); color: white; padding: 16px 24px; 
+      border-radius: 8px; display: none; z-index: 2000; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading" class="loading">資料處理中...</div>
+
+<div id="loginView" style="display:flex; height:100vh; justify-content:center; align-items:center; flex-direction:column; background: #fff;">
+  <h2 style="color: var(--color-brand-600); margin-bottom: 24px;">2026 車流退場作業</h2>
+  <div id="g_id_onload"
+       data-client_id="YOUR_GOOGLE_CLIENT_ID" 
+       data-callback="handleCredentialResponse"
+       data-auto_select="true">
+  </div>
+  <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"></div>
+</div>
+
+<div id="appView" style="display:none;">
+  <div class="container">
+    <div class="header">
+      <select id="sheetSelector" onchange="loadData()">
+        <option value="地區專車退場（遊覽車平台）">地區專車退場（遊覽車平台）</option>
+        <option value="地區專車退場（禪堂平台）">地區專車退場（禪堂平台）</option>
+        <option value="水陸專車退場">水陸專車退場</option>
+        <option value="288法青退場">288法青退場</option>
+      </select>
+      <div style="display:flex; gap:8px;">
+        <button id="btnAddCol" class="nav-btn" onclick="promptAddColumn()" style="display:none; color:var(--color-warning-500); border-color:var(--color-warning-500);">+ 站點</button>
+        <button class="nav-btn" onclick="logout()">登出</button>
+      </div>
+    </div>
+
+    <div id="cardContainer" class="view-card"></div>
+    
+    <div class="view-table">
+      <table id="dataTable">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-title" id="sheetTitle">操作選單</div>
+  <div class="sheet-actions">
+    <button class="btn-lg btn-primary" onclick="doStamp()">
+      <span>🕒 立即打卡 (現在)</span>
+    </button>
+    
+    <div style="display:flex; gap:12px;">
+      <input type="time" id="manualTime" class="btn-lg btn-outline" style="flex:1; font-family:inherit;">
+      <button class="btn-lg btn-outline" style="flex:1;" onclick="doUpdate()">更新時間</button>
+    </div>
+    
+    <button class="btn-lg btn-outline" onclick="doSkip()" style="color: var(--color-text-sub);">
+      🚫 略過此站 (Skip)
+    </button>
+    <button class="btn-lg btn-ghost" onclick="closeSheet()">取消</button>
+  </div>
+</div>
+
+<script>
+  let currentUser = null;
+  let currentSheetData = null;
+  let activeTarget = null; // { carNo, colName }
+
+  // === Auth ===
+  function handleCredentialResponse(response) {
+    const idToken = response.credential;
+    const payload = JSON.parse(atob(idToken.split('.')[1]));
+    currentUser = { email: payload.email, token: idToken }; 
+    
+    document.getElementById('loading').style.display = 'block';
+    // 呼叫後端 API: verify
+    google.script.run
+      .withSuccessHandler(res => {
+        document.getElementById('loading').style.display = 'none';
+        if(res.ok) {
+          currentUser.permission = res.permission;
+          document.getElementById('loginView').style.display = 'none';
+          document.getElementById('appView').style.display = 'block';
+          
+          if(['ADMIN', 'LEADER'].includes(res.permission)) {
+            document.getElementById('btnAddCol').style.display = 'inline-block';
+          }
+          loadData();
+        } else {
+          alert('登入失敗: ' + res.msg);
+        }
+      })
+      .withFailureHandler(err => {
+         document.getElementById('loading').style.display = 'none';
+         alert('系統錯誤: ' + err);
+      })
+      .doGet({ parameter: { action: 'verify', userEmail: currentUser.email } }); 
+      // 注意: google.script.run 只能呼叫 Server function，
+      // 這裡為了相容 doGet 路由架構，我們直接呼叫包裝好的 Controller 
+      // 建議: 實作一個 runApi function 在後端專門給 google.script.run 呼叫
+  }
+  
+  // 修正: 為了讓 google.script.run 順利運作，建議在後端加一個 function runApi(req)
+  // 如果不行，這裡改用 fetch WebApp URL (需發布為 Web App)
+  // 為了演示方便，以下假設您會將後端 doPost/doGet 邏輯封裝好。
+  // **實戰建議**: 修改 code.gs 增加一個 `function apiHandler(req) { ... }` 供前端直接呼叫
+  
+  function callApi(action, data) {
+    const payload = { ...data, action, userEmail: currentUser?.email };
+    
+    return new Promise((resolve, reject) => {
+       // 使用 google.script.run (推薦)
+       google.script.run
+         .withSuccessHandler(resolve)
+         .withFailureHandler(reject)
+         .doPost({ postData: { contents: JSON.stringify(payload) } });
+    });
+  }
+
+  function logout() {
+    currentUser = null;
+    location.reload();
+  }
+
+  // === Data Loading ===
+  function loadData() {
+    const sheetName = document.getElementById('sheetSelector').value;
+    document.getElementById('loading').style.display = 'block';
+    
+    callApi('getData', { sheetName }).then(res => {
+      document.getElementById('loading').style.display = 'none';
+      if(res.ok) {
+        currentSheetData = res;
+        render(res);
+      } else {
+        alert('讀取失敗: ' + res.msg);
+      }
+    }).catch(e => {
+       document.getElementById('loading').style.display = 'none';
+       alert('連線錯誤: ' + e);
+    });
+  }
+
+  // === Rendering ===
+  function render(data) {
+    const { headers, rows } = data;
+    const container = document.getElementById('cardContainer');
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+    
+    container.innerHTML = '';
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    // 定義哪些欄位是純資訊 (不可點擊)
+    // 依據新的規格：編號, 區域車次編號, 車號, 備註
+    const infoCols = ['編號', '區域車次編號', '車號', '備註'];
+
+    // 1. Render Table Header
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h.name;
+      thead.appendChild(th);
+    });
+
+    // 2. Render Rows
+    rows.forEach(row => {
+      const carNoIdx = headers.findIndex(h => h.name === '車號');
+      const carNo = row[carNoIdx] || 'Unknown';
+      const noteIdx = headers.findIndex(h => h.name === '備註');
+      const note = row[noteIdx] || '';
+      
+      // -- Mobile Card --
+      const card = document.createElement('div');
+      card.className = 'card';
+      let gridHtml = '';
+      
+      // Card Header: 車號 + 備註
+      card.innerHTML = `
+        <div class="card-head">
+          <span style="font-size:1.2rem; color:var(--color-brand-600)">${carNo}</span>
+          <span style="font-size:0.85rem; color:var(--color-text-sub); font-weight:normal">${note}</span>
+        </div>`;
+
+      // -- Desktop Table Row --
+      const tr = document.createElement('tr');
+
+      headers.forEach((h, idx) => {
+        const val = row[idx] || '';
+        const isDynamic = h.isDynamic;
+        const isInfo = infoCols.includes(h.name);
+        
+        // Render Cell
+        // 若有值顯示值，若無值且非資訊欄位顯示 ⭕ (Table)
+        // 手機版按鈕：顯示欄位名稱 + 值
+        const cellClass = `btn-status ${val ? 'done' : ''} ${val==='-' || val==='Skip' ? 'skip' : ''} ${isDynamic ? 'is-dynamic' : ''}`;
+        
+        const clickAttr = isInfo ? '' : `onclick="openSheet('${carNo}', '${h.name}')"`;
+        
+        // Grid Item (Mobile) - 只顯示操作按鈕
+        if (!isInfo) {
+          gridHtml += `
+            <div class="${cellClass}" ${clickAttr}>
+              <strong>${h.name}</strong>
+              <span>${val || '-'}</span>
+            </div>`;
+        }
+
+        // Table Cell (Desktop)
+        const td = document.createElement('td');
+        if(!isInfo) {
+          td.innerHTML = `<div class="${cellClass}" ${clickAttr}><span>${val}</span></div>`;
+        } else {
+          td.textContent = val;
+        }
+        tr.appendChild(td);
+      });
+
+      card.innerHTML += `<div class="status-grid">${gridHtml}</div>`;
+      container.appendChild(card);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // === Action Logic ===
+  function openSheet(carNo, colName) {
+    if(currentUser.permission === 'VIEWER') return; 
+
+    activeTarget = { carNo, colName };
+    document.getElementById('sheetTitle').textContent = `${carNo} : ${colName}`;
+    
+    // 設定目前時間
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('manualTime').value = `${hh}:${mm}`;
+
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('bottomSheet').style.bottom = '0';
+  }
+
+  function closeSheet() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('bottomSheet').style.bottom = '-100%';
+    activeTarget = null;
+  }
+
+  function doStamp() {
+    sendAction('stamp', null);
+  }
+
+  function doUpdate() {
+    const val = document.getElementById('manualTime').value;
+    if(!val) return alert('請選擇時間');
+    sendAction('update', val);
+  }
+
+  function doSkip() {
+    sendAction('stamp', '-');
+  }
+  
+  function promptAddColumn() {
+    const name = prompt("請輸入新站點名稱 (將新增至最後):");
+    if(name) {
+      const sheetName = document.getElementById('sheetSelector').value;
+      document.getElementById('loading').style.display = 'block';
+      callApi('addColumn', { sheetName, colName: name }).then(res => {
+        document.getElementById('loading').style.display = 'none';
+        if(res.ok) { alert('新增成功'); loadData(); }
+        else { alert('失敗: ' + res.msg); }
+      });
+    }
+  }
+
+  function sendAction(actType, val) {
+    if(!activeTarget) return;
+    const sheetName = document.getElementById('sheetSelector').value;
+    
+    const payload = {
+      sheetName,
+      carNo: activeTarget.carNo,
+      colName: activeTarget.colName,
+      value: val
+    };
+
+    document.getElementById('loading').style.display = 'block';
+    closeSheet();
+
+    callApi(actType, payload).then(res => {
+      document.getElementById('loading').style.display = 'none';
+      if(res.ok) {
+        loadData(); 
+      } else {
+        alert('Error: ' + res.msg);
+      }
+    });
+  }
+</script>
+</body>
+</html>
