@@ -260,10 +260,11 @@
   async function callApi(action, data = {}) {
     // 準備傳送的資料包
     const payload = {
-      action: action,
-      userEmail: currentUser ? currentUser.email : '',
-      ...data
-    };
+    action: action,
+    // 確保有傳送 token
+    token: (currentUser && currentUser.token) ? currentUser.token : (data.token || ''),
+    ...data
+  };
 
     console.log(`[API Call] ${action}`, payload);
 
