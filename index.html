@@ -7,106 +7,131 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     /* =========================================
-       1. Design Tokens & Colors (Mobile First)
+       1. Design Tokens & Colors
        ========================================= */
     :root {
-      /* Brand Colors */
-      --c-brand: #1f6fe5;       /* 主色藍 (Primary) */
-      --c-brand-dark: #1e40af;  /* 深藍 */
+      --c-brand: #1f6fe5;
+      --c-brand-dark: #1e40af;
+      --c-success: #22c55e;
+      --c-danger: #ef4444;
+      --c-neutral: #64748b;
+      --c-dark: #334155;
       
-      /* Functional Colors */
-      --c-success: #22c55e;     /* 綠色 (修改/完成) */
-      --c-danger: #ef4444;      /* 紅色 (刪除/未完成) */
-      --c-neutral: #64748b;     /* 灰色 (略過/次要) */
-      --c-dark: #334155;        /* 深灰 (系統按鈕) */
-      
-      /* Backgrounds */
-      --bg-success-light: #ecfdf5; /* 完成項目的淡綠底 */
-      --border-success: #10b981;   /* 完成項目的綠框 */
-      --text-success: #047857;     /* 完成項目的綠字 */
+      --bg-success-light: #ecfdf5; 
+      --border-success: #10b981;
+      --text-success: #047857;
 
-      /* UI Bases */
       --bg-body: #e5e7eb;
       --bg-app: #f8fafc;
       --bg-surface: #ffffff;
       --border: #e2e8f0;
       
-      /* Text Colors */
-      --text-main: #0f172a; /* 深黑 (主要內容) */
-      --text-sub: #64748b;  /* 深灰 (次要內容) */
+      --text-main: #0f172a;
+      --text-sub: #64748b;
 
-      /* Metrics */
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-pill: 50px;
-      --app-max-width: 800px; /* 手機版最大寬度限制 */
+      --app-max-width: 800px; 
       
-      /* Layers */
       --z-bottom: 1100;
       --z-overlay: 1000;
       --z-header: 500;
     }
 
     body { 
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
       background: var(--bg-body); color: var(--text-main); 
       padding-bottom: 0; -webkit-tap-highlight-color: transparent;
     }
 
-    /* App Shell */
     #appView {
       max-width: var(--app-max-width); margin: 0 auto;
       background-color: var(--bg-app); min-height: 100vh;
       box-shadow: 0 0 30px rgba(0,0,0,0.1); padding-bottom: 80px; 
     }
 
-    .container { padding: 12px; } /* Slightly tighter padding for mobile */
+    .container { padding: 12px; }
 
     /* =========================================
-       2. Header (Grid Layout for Perfect Centering)
+       2. Header (Responsive Layout)
        ========================================= */
     .app-header {
-      background: var(--bg-surface); padding: 12px 16px;
+      background: var(--bg-surface); padding: 8px 16px;
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display: grid;
-      /* Left (Title) | Center (Time) | Right (Controls) */
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center; gap: 8px;
+      align-items: center; 
+      height: 60px;
     }
 
-    .app-title { 
-      font-size: 1.1rem; font-weight: 800; color: var(--c-brand); 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    /* --- Mobile Header Layout (Default) --- */
+    /* Left: Icon | Center: Time | Right: Icon */
+    .app-header {
+      grid-template-columns: 44px 1fr 44px; 
     }
 
+    /* Elements visibility toggles */
+    .mobile-only { display: flex; }
+    .desktop-only { display: none; }
+
+    /* Icon Buttons (Mobile style) */
+    .header-btn {
+      background: transparent; border: none; padding: 0;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-sub); cursor: pointer; transition: 0.2s;
+    }
+    .header-btn:active { background: #f1f5f9; color: var(--c-brand); }
+    .header-btn svg { width: 24px; height: 24px; }
+
+    .header-btn-left { justify-self: start; }
+    .header-btn-right { justify-self: end; color: var(--text-main); }
+
+    /* Center Time */
     .header-clock { 
-      font-family: monospace; /* 等寬字體避免跳動 */
-      font-size: 1.1rem; font-weight: 800; 
-      color: var(--text-main); white-space: nowrap; 
+      font-family: monospace; font-size: 1.2rem; font-weight: 800; 
+      color: var(--text-main); white-space: nowrap; text-align: center;
     }
 
-    .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
-
-    /* Refresh Buttons */
-    .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
-    .refresh-btn { 
-      border: none; background: transparent; padding: 4px 8px; 
-      font-size: 11px; font-weight: 600; color: var(--text-sub); 
-      border-radius: var(--radius-pill); cursor: pointer; transition: 0.2s;
+    /* --- Desktop Header Overrides (Revert to previous) --- */
+    @media (min-width: 768px) {
+      .app-header {
+        grid-template-columns: 200px 1fr 200px; /* Title | Time | Controls */
+        padding: 12px 24px;
+      }
+      .mobile-only { display: none !important; }
+      .desktop-only { display: flex !important; }
+      
+      .app-title { 
+        display: block; font-size: 1.2rem; font-weight: 800; color: var(--c-brand); 
+        white-space: nowrap;
+      }
+      
+      .header-right-group {
+        justify-self: end; display: flex; align-items: center; gap: 8px;
+      }
+      
+      /* Desktop Refresh Pills */
+      .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
+      .refresh-btn { 
+        border: none; background: transparent; padding: 4px 10px; 
+        font-size: 12px; font-weight: 600; color: var(--text-sub); 
+        border-radius: var(--radius-pill); cursor: pointer; transition: 0.2s;
+      }
+      .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+      
+      /* Desktop Logout Button */
+      .btn-logout-desktop {
+        background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
+        border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+      }
     }
-    .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Logout Button */
-    .btn-logout {
-      background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
-      border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
-    }
-
-    /* Level 1 Navigation (Big Pills) */
+    /* Level 1 Navigation */
     .nav-tabs-wrapper {
-      grid-column: 1 / -1; /* Span full width */
-      display: flex; gap: 10px; margin-top: 12px; justify-content: center;
+      grid-column: 1 / -1; 
+      display: flex; gap: 10px; margin-top: 4px; justify-content: center;
     }
     .nav-tab {
       flex: 1; padding: 10px 0; border: none; border-radius: var(--radius-pill);
@@ -121,14 +146,18 @@
        ========================================= */
     .dash-filters {
       display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
-      -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
+      -webkit-overflow-scrolling: touch; 
+      scrollbar-width: none; 
     }
+    .dash-filters::-webkit-scrollbar { display: none; }
+
     .filter-btn {
       padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid transparent;
       font-size: 0.9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
       background: #fff; color: var(--text-sub); border-color: var(--border);
-      transition: 0.2s;
+      transition: 0.2s; flex-shrink: 0;
     }
+    .dash-filters::after { content:''; padding-right: 8px; }
     
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
@@ -150,19 +179,21 @@
       border: 1px solid transparent;
     }
     .stat-box:active { background: #e2e8f0; }
-    .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; } /* Big Number */
+    .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; } 
     .stat-lbl { font-size: 0.8rem; color: var(--text-sub); margin-top: 4px; font-weight: 600; }
     .num-done { color: var(--c-brand); }
     .num-todo { color: var(--c-danger); }
 
-    /* Location Cards (Peeking & Grid) */
+    /* Location Cards (Peeking) */
     .loc-container {
       display: flex; gap: 10px; padding-bottom: 8px; 
       overflow-x: auto; scroll-snap-type: x mandatory;
+      scrollbar-width: none;
     }
+    .loc-container::-webkit-scrollbar { display: none; }
+    
     .loc-card {
-      /* Mobile: 42% width ensures ~2.2 cards visible (Peeking effect) */
-      flex: 0 0 42%; min-width: 120px; 
+      flex: 0 0 42%; min-width: 120px; /* Peeking width */
       background: var(--bg-surface); border: 1px solid var(--border);
       border-radius: var(--radius-md); padding: 12px; text-align: center; 
       scroll-snap-align: start; cursor: pointer;
@@ -184,7 +215,7 @@
     .summary-table td { color: var(--text-main); font-weight: 500; }
 
     /* =========================================
-       4. Tab 2: Operation List (Grid Layout)
+       4. Tab 2: Operation List
        ========================================= */
     .op-toolbar { 
       display: flex; gap: 8px; margin-bottom: 16px; align-items: center; 
@@ -196,34 +227,34 @@
       color: var(--c-brand); border-radius: 6px; font-weight: 700; cursor: pointer; white-space: nowrap;
     }
 
-    /* List Card - 3 Column Grid */
+    /* List Card - Grid */
     .veh-card {
       background: var(--bg-surface); border-radius: var(--radius-md);
       padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer; transition: 0.2s; border: 1px solid transparent;
       
-      /* Grid: [Info Stack (Fixed Width)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
+      /* Mobile Grid: Fixed Left | Fluid Mid | Fixed Right 
+         Use minmax(0, 1fr) to prevent text overflow pushing buttons out */
       display: grid;
-      grid-template-columns: 85px 1fr 40px; 
+      grid-template-columns: 85px minmax(0, 1fr) 44px; 
       align-items: center; gap: 10px;
-      min-height: 70px; /* Slight taller for stacked text */
+      min-height: 70px; 
     }
     .veh-card:active { transform: scale(0.98); background-color: #f8fafc; }
 
-    /* Left Column Stack (Vehicle Info) */
+    /* Left Column Stack */
     .veh-col-left { display: flex; flex-direction: column; gap: 2px; }
-    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; }
-    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; }
+    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Middle Column Stack (Status) */
+    /* Middle Column Stack */
     .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
     .status-row { font-size: 0.95rem; font-weight: 700; color: var(--c-brand); line-height: 1.3; }
     .status-sep { border-top: 1px dashed #cbd5e1; margin: 4px 0; width: 100%; opacity: 0.5; }
     .status-pending { color: var(--c-neutral); font-weight: 500; }
-    /* Dynamic status style */
     .status-dynamic { font-size: 0.9rem; font-weight: 600; color: var(--c-brand-dark); }
 
-    /* Expand Button (+) */
+    /* Expand Button */
     .btn-expand {
       width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
       background: #eff6ff; color: var(--c-brand); border-radius: 8px; 
@@ -246,7 +277,7 @@
     .filter-clear { text-decoration: underline; cursor: pointer; font-weight: 700; }
 
     /* =========================================
-       5. Bottom Sheet (Three Column Grid)
+       5. Bottom Sheet
        ========================================= */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: var(--z-overlay); backdrop-filter: blur(2px); }
     .bottom-sheet {
@@ -263,22 +294,32 @@
     .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .sheet-title { font-size: 1.4rem; font-weight: 800; color: #000; }
     
-    /* 3-Column Grid: Label | Time | Buttons */
+    /* Action Row Layout */
     .action-row { 
-      display: grid; 
-      /* Label | Time (Center) | Buttons (Right) */
-      grid-template-columns: 130px 1fr auto; 
-      align-items: center; 
-      padding: 12px 0; 
+      padding: 14px 0; 
       border-bottom: 1px dashed #eee; 
-      gap: 4px;
     }
-    
-    .action-label { font-size: 1rem; font-weight: 700; color: var(--text-main); text-align: left; }
-    .action-mid { text-align: center; } 
-    .action-right { display: flex; justify-content: flex-end; } 
 
-    /* Time & Status Colors */
+    /* Mobile: Stacked Layout to prevent overlap */
+    .action-row-content {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .action-label { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+    
+    .action-data { 
+      display: flex; justify-content: space-between; align-items: center; 
+    }
+
+    /* Desktop Overrides for Action Row: Keep horizontal */
+    @media (min-width: 768px) {
+      .action-row-content {
+        flex-direction: row; align-items: center; justify-content: space-between;
+      }
+      .action-data {
+        justify-content: flex-end; gap: 16px; flex: 1;
+      }
+    }
+
     .action-time { font-family: monospace; font-size: 1rem; font-weight: 700; color: var(--c-brand); }
     .action-skip { font-size: 0.95rem; color: var(--c-brand); font-weight: 700; }
 
@@ -331,12 +372,32 @@
 
 <div id="appView" class="hidden">
   <header class="app-header">
-    <div class="app-title">2026水陸法會退場</div>
+    
+    <button class="header-btn header-btn-left mobile-only" onclick="manualRefresh()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+    </button>
+
+    <div class="app-title desktop-only">2026 車流退場作業</div>
+    
     <div class="header-clock" id="headerClock">--:--:--</div>
-    <div class="header-right">
-      <div class="refresh-ctrl" id="refreshCtrl"></div>
-      <button class="btn-logout" onclick="logout()">登出</button>
+    
+    <button class="header-btn header-btn-right mobile-only" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+    </button>
+
+    <div class="header-right-group desktop-only">
+        <div class="refresh-ctrl" id="refreshCtrl"></div>
+        <button class="btn-logout-desktop" onclick="logout()">登出</button>
     </div>
+
     <div class="nav-tabs-wrapper">
         <button class="nav-tab active" onclick="switchTab('dash')">整體情報</button>
         <button class="nav-tab" onclick="switchTab('op')">登錄與修改</button>
@@ -401,7 +462,12 @@
   ];
 
   const STOP_OPTIONS = ['🅿️ 禪堂平台','🅿️ 法心北路','🅿️ 法心南路（西）','🅿️ 法心南路（東）','🅿️ 法大路','🅿️ 雙環路至法大一橋'];
+  
+  // Desktop Refresh Options
   const REFRESH_OPTIONS = [{ label:'5分', ms:300000 }, { label:'2分', ms:120000 }, { label:'60秒', ms:60000 }, { label:'30秒', ms:30000 }];
+  
+  // Default for Mobile
+  const MOBILE_REFRESH_MS = 20000; 
 
   let currentUser = null;
   let allData = {};
@@ -409,7 +475,7 @@
   let currentDashFilter = 'ALL';
   let activeFilter = null;
   let refreshTimer = null;
-  let refreshMs = 60000;
+  let refreshMs = MOBILE_REFRESH_MS; // Default
 
   function handleCredentialResponse(response) {
     const payload = JSON.parse(decodeURIComponent(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
@@ -434,13 +500,14 @@
       document.getElementById('btnAdd').classList.remove('hidden');
     }
 
-    const isMobile = window.innerWidth < 768;
-    const isPowerUser = currentUser.permission === 'ADMIN';
-    if(isPowerUser && !isMobile) refreshMs = 30000; 
-    else if(isMobile) refreshMs = 60000; 
-    else refreshMs = 120000; 
-    
-    renderRefreshCtrl();
+    // Desktop uses slower default or power user setting, Mobile is fixed 20s
+    if (window.innerWidth >= 768) {
+        refreshMs = 60000; // Desktop default
+        renderRefreshCtrl(); // Only render for desktop
+    } else {
+        refreshMs = MOBILE_REFRESH_MS; // Mobile default
+    }
+
     renderSheetSelector();
     renderDashFilters(); 
     loadAllData(true);
@@ -773,18 +840,22 @@
       const hIdx = header.findIndex(h => h.name === step);
       const val = (row[hIdx] || '').trim();
       
+      // Use "action-row" with "action-row-content" wrapper for better mobile stacking
       const rowDiv = document.createElement('div');
       rowDiv.className = 'action-row';
-      const left = document.createElement('div');
-      left.className = 'action-label';
-      left.textContent = step;
-      rowDiv.appendChild(left);
-
-      const mid = document.createElement('div');
-      mid.className = 'action-mid';
       
-      const right = document.createElement('div');
-      right.className = 'action-right';
+      // Label
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'action-row-content';
+      
+      const label = document.createElement('div');
+      label.className = 'action-label';
+      label.textContent = step;
+      contentDiv.appendChild(label);
+
+      // Data (Time + Buttons)
+      const dataDiv = document.createElement('div');
+      dataDiv.className = 'action-data';
       
       if(step === cfg.parkingField) {
         if(!isViewer) {
@@ -792,31 +863,31 @@
           sel.className = 'sheet-select';
           sel.innerHTML = `<option value="">---- 清除 ----</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
-          right.appendChild(sel);
+          dataDiv.appendChild(sel);
         } else {
-          mid.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
+          dataDiv.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
         }
       } 
       else {
         if(val && val !== 'Skip' && val !== '-') {
-          mid.innerHTML = `<span class="action-time">${val}</span>`;
+          dataDiv.innerHTML = `<span class="action-time">${val}</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
                <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '${val}')">修改</button>
                <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
-             right.appendChild(div);
+             dataDiv.appendChild(div);
           }
         } else if(val === 'Skip' || val === '-') {
-          mid.innerHTML = `<span class="action-skip">已略過</span>`;
+          dataDiv.innerHTML = `<span class="action-skip">已略過</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
                <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '')">修改</button>
                <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
-             right.appendChild(div);
+             dataDiv.appendChild(div);
           }
         } else {
           if(!isViewer) {
@@ -825,12 +896,12 @@
               <button class="btn-solid btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
               <button class="btn-solid btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
             `;
-            right.appendChild(div);
+            dataDiv.appendChild(div);
           }
         }
       }
-      rowDiv.appendChild(mid);
-      rowDiv.appendChild(right);
+      contentDiv.appendChild(dataDiv);
+      rowDiv.appendChild(contentDiv);
       body.appendChild(rowDiv);
     });
 
@@ -987,7 +1058,18 @@
   }
 
   function setRefresh(ms) { refreshMs = ms; renderRefreshCtrl(); startTimer(); }
-  function startTimer() { if(refreshTimer) clearInterval(refreshTimer); refreshTimer = setInterval(() => loadAllData(false), refreshMs); }
+  
+  // Manual Trigger
+  function manualRefresh() {
+    loadAllData(true);
+    startTimer(); // Reset timer
+  }
+
+  function startTimer() { 
+    if(refreshTimer) clearInterval(refreshTimer); 
+    refreshTimer = setInterval(() => loadAllData(false), refreshMs); 
+  }
+  
   function logout() { localStorage.removeItem('ddcc_user_token'); location.reload(); }
 </script>
 </body>
