@@ -194,24 +194,24 @@
       padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer; transition: 0.2s; border: 1px solid transparent;
       
-      /* Grid Layout: Car | Area | Status | Btn */
+      /* Grid Layout: [Info Stack] | [Status Stack] | [Btn] */
       display: grid;
-      grid-template-columns: 22fr 22fr 46fr 40px; 
-      align-items: center; gap: 8px;
+      grid-template-columns: 28% 1fr 40px; 
+      align-items: center; gap: 10px;
       min-height: 60px;
     }
     .veh-card:active { transform: scale(0.98); }
 
-    /* Text Styles */
-    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Left Column Stack */
+    .veh-col-left { display: flex; flex-direction: column; gap: 2px; }
+    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-sub); line-height: 1.2; }
     
-    .veh-status { 
-      font-size: 15px; font-weight: 700; color: var(--c-brand); 
-      white-space: pre-line; /* Handle multi-line */
-      line-height: 1.4;
-      text-align: left; 
-    }
+    /* Middle Column Stack */
+    .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
+    .status-row { font-size: 15px; font-weight: 700; color: var(--c-brand); line-height: 1.3; }
+    .status-sep { border-top: 1px dashed #cbd5e1; margin: 4px 0; width: 100%; opacity: 0.7; }
+    .status-pending { color: #94a3b8; font-weight: 500; }
 
     /* Expand Button (+) */
     .btn-expand {
@@ -225,7 +225,7 @@
       background-color: var(--bg-success-light);
       border-color: var(--border-success);
     }
-    .veh-card.completed .veh-status { color: var(--text-success); }
+    .veh-card.completed .status-row { color: var(--text-success); }
     .veh-card.completed .btn-expand { background: var(--border-success); color: #fff; border-color: var(--border-success); content: "✓"; }
 
     .filter-bar {
@@ -264,7 +264,6 @@
     }
     
     .action-label { font-size: 16px; font-weight: 600; color: var(--text-main); text-align: left; }
-    
     .action-mid { text-align: center; } /* Center column */
     .action-right { display: flex; justify-content: flex-end; } /* Right column */
 
@@ -649,36 +648,33 @@
       document.getElementById('filterMsg').classList.add('hidden');
     }
 
-    // Prepare rows with Progress calculation for sorting
+    // Prepare rows
     const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
     const renderItems = rows.map((row, idx) => {
-        // 1. Calculate Standard Progress & Find Latest Standard Status
+        // 1. Standard Progress & Latest Status
         let stdCompletedCount = 0;
-        let latestStdTime = ''; // Used for comparison
-        let displayStatus = '尚未開始';
+        let latestStdTime = ''; 
+        let displayStatus = null;
         
         cfg.steps.forEach(step => {
             const hIdx = header.findIndex(h => h.name === step);
             const val = (row[hIdx] || '').trim();
             if(val && val !== '-') {
                 stdCompletedCount++;
-                // Update latest standard status
                 if(step === cfg.parkingField) {
-                    displayStatus = val;
-                    // Parking doesn't usually have time, treat as "now" or ignore for time comparison?
-                    // Let's treat it as a status update.
+                    displayStatus = `<div class="status-row">${val}</div>`;
                 } else if(val === 'Skip') {
-                    displayStatus = `${step} (略過)`;
-                    // Skip has no time, so it won't be overridden by dynamic stations unless dynamic has time?
-                    // Let's assume Skip is "current".
+                    displayStatus = `<div class="status-row">${step} (略過)</div>`;
                 } else {
-                    displayStatus = `${step} ${val}`;
-                    latestStdTime = val; // "HH:mm:ss"
+                    displayStatus = `<div class="status-row">${step}</div><div class="status-row">${val}</div>`;
+                    latestStdTime = val; 
                 }
             }
         });
 
-        // 2. Find Matching Dynamic Stations (Time > Latest Std Time)
+        if(!displayStatus) displayStatus = `<div class="status-row status-pending">尚未開始</div>`;
+
+        // 2. Dynamic Stations (Time > Latest Std Time)
         const dynamicHeaders = header.filter(h => h.isDynamic);
         let dynamicUpdates = [];
         
@@ -686,31 +682,27 @@
             const hIdx = header.indexOf(dh);
             const val = (row[hIdx] || '').trim();
             if(val && val !== '-' && val !== 'Skip') {
-                // If there is a standard time, compare. If no standard time (only Skip or nothing), show dynamic.
                 if(!latestStdTime || val > latestStdTime) {
                     dynamicUpdates.push({ name: dh.name, time: val });
                 }
             }
         });
-
-        // Sort dynamic updates by time ascending
         dynamicUpdates.sort((a, b) => a.time.localeCompare(b.time));
 
-        // 3. Construct Final Status String (Multi-line)
-        let finalStatusHtml = displayStatus;
+        // 3. Construct Final HTML (Vertical Stack)
+        let finalHtml = displayStatus;
         if(dynamicUpdates.length > 0) {
+            finalHtml += `<div class="status-sep"></div>`;
             dynamicUpdates.forEach(u => {
-                finalStatusHtml += `\n${u.name} ${u.time}`;
+                finalHtml += `<div class="status-row">${u.name} ${u.time}</div>`;
             });
         }
 
-        // Check if ALL standard steps are done
         const isAllDone = stdCompletedCount === cfg.steps.length;
-
-        return { row, stdCompletedCount, finalStatusHtml, isAllDone, originalIdx: idx };
+        return { row, stdCompletedCount, finalHtml, isAllDone, originalIdx: idx };
     });
 
-    // Sort: Progress (Ascending - less done first), then Original Index
+    // Sort: Standard Progress (Low -> High), then Index
     renderItems.sort((a, b) => {
         if (a.stdCompletedCount !== b.stdCompletedCount) return a.stdCompletedCount - b.stdCompletedCount;
         return a.originalIdx - b.originalIdx;
@@ -724,18 +716,16 @@
     renderItems.forEach(item => {
       const card = document.createElement('div');
       card.className = `veh-card ${item.isAllDone ? 'completed' : ''}`;
-      
-      // Determine color for status
-      let statusStyle = '';
-      if(item.finalStatusHtml.includes('略過')) statusStyle = 'color: var(--c-brand);'; 
-      else if(item.finalStatusHtml === '尚未開始') statusStyle = 'color: #94a3b8; font-weight:500;';
-      
       const btnIcon = item.isAllDone ? '✓' : '+';
       
       card.innerHTML = `
-        <div class="txt-car">${item.row[carIdx] || ''}</div>
-        <div class="txt-area">${item.row[areaIdx] || ''}</div>
-        <div class="veh-status" style="${statusStyle}">${item.finalStatusHtml}</div>
+        <div class="veh-col-left">
+            <div class="txt-car">${item.row[carIdx] || ''}</div>
+            <div class="txt-area">${item.row[areaIdx] || ''}</div>
+        </div>
+        <div class="veh-col-mid">
+            ${item.finalHtml}
+        </div>
         <div class="btn-expand">${btnIcon}</div>
       `;
       card.onclick = () => openBottomSheet(item.row, header, carIdx, areaIdx);
@@ -746,7 +736,6 @@
   // ================= MANAGERS =================
   function openBottomSheet(row, header, carIdx, areaIdx) {
     const title = document.getElementById('sheetTitle');
-    // Title format: "291-CC 安和1車"
     title.textContent = `${row[carIdx]} ${row[areaIdx]}`;
     const body = document.getElementById('sheetBody');
     body.innerHTML = '';
@@ -789,8 +778,6 @@
           sel.className = 'sheet-select';
           sel.innerHTML = `<option value="">---- 清除 ----</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
-          // For parking, put select in middle? Or right? 
-          // Previous design put it in right. Let's put in right for better touch target.
           right.appendChild(sel);
         } else {
           mid.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
@@ -818,7 +805,6 @@
              right.appendChild(div);
           }
         } else {
-          // Empty
           if(!isViewer) {
             const div = document.createElement('div'); div.className = 'btn-group';
             div.innerHTML = `
@@ -826,8 +812,6 @@
               <button class="btn-solid btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
             `;
             right.appendChild(div);
-          } else {
-            // mid.innerHTML = '<span style="color:#ccc">-</span>';
           }
         }
       }
@@ -843,7 +827,7 @@
   // ================= LOCATION MANAGEMENT (TAB 1) =================
   function openLocationSheet(locName, sheetKey) {
     const title = document.getElementById('sheetTitle');
-    title.textContent = `${locName}`; // Just location name
+    title.textContent = `${locName}`; 
     const body = document.getElementById('sheetBody');
     body.innerHTML = '';
 
@@ -881,7 +865,6 @@
     body.appendChild(sep);
     body.appendChild(head);
 
-    // Candidates: Vehicles with NO parking location
     const candidates = data.rows.filter(r => {
         const val = (r[parkingIdx] || '').trim();
         return !val || val === '-';
