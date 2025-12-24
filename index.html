@@ -571,7 +571,6 @@
   }
 
   // ================= UI: OPERATION LIST =================
-  // ================= UI: OPERATION LIST =================
   function renderList() {
     const data = allData[currentSheetName];
     if(!data || !data.headers) return;
@@ -581,8 +580,11 @@
 
     const header = data.headers;
     const carIdx = header.findIndex(h => h.name === '車號');
-    // 抓取區域欄位 (相容 '區域車次編號' 或 '編號')
-    const areaIdx = header.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    
+    // ★★★ 修正點：優先抓取「區域車次編號」，確保不抓到流水號「編號」 ★★★
+    let areaIdx = header.findIndex(h => h.name === '區域車次編號');
+    // 如果找不到 (防呆)，才嘗試找包含「區域」的欄位
+    if (areaIdx === -1) areaIdx = header.findIndex(h => h.name.includes('區域'));
     
     // 過濾邏輯 (Filter)
     let rows = data.rows;
@@ -621,6 +623,7 @@
       }
 
       // 生成 HTML：左側(車號+區域) / 右側(狀態)
+      // ★★★ 確保 txt-car (車號) 在左，txt-area (區域) 在右 ★★★
       card.innerHTML = `
         <div class="veh-left">
           <div class="txt-car">${row[carIdx] || ''}</div>
