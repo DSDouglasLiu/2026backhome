@@ -183,15 +183,51 @@
 
     /* 列表視圖 (List/Card) */
     .veh-card {
-      background: var(--color-surface); border-radius: var(--radius-md);
-      padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border-left: 4px solid transparent; cursor: pointer; transition: 0.2s;
-      display: flex; justify-content: space-between; align-items: center;
+      background: var(--color-surface); 
+      border-radius: var(--radius-md);
+      padding: 16px; 
+      margin-bottom: 12px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer; 
+      transition: 0.2s;
+      
+      /* 關鍵佈局設定 */
+      display: flex; 
+      justify-content: space-between; /* 左右撐開 */
+      align-items: center; /* 上下垂直置中 */
+      min-height: 60px; /* 確保高度一致 */
     }
-    .veh-card:active { transform: scale(0.98); }
+    
+    .veh-card:active { transform: scale(0.98); background-color: #f1f5f9; }
+
+    /* 左側群組：車號 + 區域 */
+    .veh-left {
+      display: flex;
+      align-items: center;
+      gap: 12px; /* 車號與區域的間距 */
+    }
+
+    /* 統一文字大小與樣式 */
+    .txt-car { 
+      font-size: 16px; 
+      font-weight: 700; 
+      color: var(--color-text-main); 
+    }
+    
+    .txt-area { 
+      font-size: 16px; 
+      font-weight: 400; /* 區域稍微細一點區分，或改成 700 也可以 */
+      color: var(--color-text-main); 
+    }
     .veh-info h3 { margin: 0 0 4px 0; font-size: 18px; font-weight: 800; color: var(--color-text-main); }
     .veh-info p { margin: 0; font-size: 13px; color: var(--color-text-sub); }
-    .veh-status { font-size: 14px; font-weight: 600; color: var(--color-brand-500); text-align: right; }
+    .veh-status { 
+      font-size: 16px; 
+      font-weight: 700; 
+      color: var(--color-brand-500); 
+      text-align: right;
+      white-space: nowrap; /* 不換行 */
+    }
     .veh-status span { display: block; font-size: 12px; color: #999; font-weight: 400; }
 
     /* 篩選提示條 */
