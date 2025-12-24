@@ -7,23 +7,23 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     /* =========================================
-       1. Design Tokens & Colors
+       1. Design Tokens & Colors (Mobile First)
        ========================================= */
     :root {
       /* Brand Colors */
-      --c-brand: #1f6fe5;       /* 主色藍 */
+      --c-brand: #1f6fe5;       /* 主色藍 (Primary) */
       --c-brand-dark: #1e40af;  /* 深藍 */
       
       /* Functional Colors */
-      --c-success: #22c55e;     /* 修改/綠 */
-      --c-danger: #ef4444;      /* 刪除/紅 */
-      --c-neutral: #64748b;     /* 略過/灰 */
-      --c-dark: #334155;        /* 系統/深灰 */
+      --c-success: #22c55e;     /* 綠色 (修改/完成) */
+      --c-danger: #ef4444;      /* 紅色 (刪除/未完成) */
+      --c-neutral: #64748b;     /* 灰色 (略過/次要) */
+      --c-dark: #334155;        /* 深灰 (系統按鈕) */
       
-      /* Backgrounds for Completed State */
-      --bg-success-light: #ecfdf5; 
-      --border-success: #10b981;
-      --text-success: #047857;
+      /* Backgrounds */
+      --bg-success-light: #ecfdf5; /* 完成項目的淡綠底 */
+      --border-success: #10b981;   /* 完成項目的綠框 */
+      --text-success: #047857;     /* 完成項目的綠字 */
 
       /* UI Bases */
       --bg-body: #e5e7eb;
@@ -31,15 +31,15 @@
       --bg-surface: #ffffff;
       --border: #e2e8f0;
       
-      /* Text */
-      --text-main: #0f172a;
-      --text-sub: #64748b;
+      /* Text Colors */
+      --text-main: #0f172a; /* 深黑 (主要內容) */
+      --text-sub: #64748b;  /* 深灰 (次要內容) */
 
       /* Metrics */
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-pill: 50px;
-      --app-max-width: 800px; 
+      --app-max-width: 800px; /* 手機版最大寬度限制 */
       
       /* Layers */
       --z-bottom: 1100;
@@ -48,7 +48,7 @@
     }
 
     body { 
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
       background: var(--bg-body); color: var(--text-main); 
       padding-bottom: 0; -webkit-tap-highlight-color: transparent;
     }
@@ -60,29 +60,35 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.1); padding-bottom: 80px; 
     }
 
-    .container { padding: 16px; }
+    .container { padding: 12px; } /* Slightly tighter padding for mobile */
 
     /* =========================================
-       2. Header (Grid Layout)
+       2. Header (Grid Layout for Perfect Centering)
        ========================================= */
     .app-header {
       background: var(--bg-surface); padding: 12px 16px;
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display: grid;
+      /* Left (Title) | Center (Time) | Right (Controls) */
       grid-template-columns: 1fr auto 1fr;
       align-items: center; gap: 8px;
     }
 
-    .app-title { font-size: 1.1rem; font-weight: 800; color: var(--c-brand); white-space: nowrap; }
+    .app-title { 
+      font-size: 1.1rem; font-weight: 800; color: var(--c-brand); 
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
     .header-clock { 
-      font-family: monospace; font-size: 1.1rem; font-weight: 800; 
+      font-family: monospace; /* 等寬字體避免跳動 */
+      font-size: 1.1rem; font-weight: 800; 
       color: var(--text-main); white-space: nowrap; 
     }
 
     .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 
+    /* Refresh Buttons */
     .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
     .refresh-btn { 
       border: none; background: transparent; padding: 4px 8px; 
@@ -91,6 +97,7 @@
     }
     .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
+    /* Logout Button */
     .btn-logout {
       background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
       border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
@@ -98,12 +105,12 @@
 
     /* Level 1 Navigation (Big Pills) */
     .nav-tabs-wrapper {
-      grid-column: 1 / -1;
+      grid-column: 1 / -1; /* Span full width */
       display: flex; gap: 10px; margin-top: 12px; justify-content: center;
     }
     .nav-tab {
       flex: 1; padding: 10px 0; border: none; border-radius: var(--radius-pill);
-      font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s;
+      font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s;
       text-align: center; white-space: nowrap;
       background: #fff; color: var(--c-brand); border: 1px solid var(--c-brand);
     }
@@ -114,18 +121,18 @@
        ========================================= */
     .dash-filters {
       display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
     }
     .filter-btn {
       padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid transparent;
-      font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer;
+      font-size: 0.9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
       background: #fff; color: var(--text-sub); border-color: var(--border);
       transition: 0.2s;
     }
     
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
-      font-size: 16px; font-weight: 800; margin-bottom: 12px; 
+      font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; 
       padding-left: 10px; border-left: 5px solid var(--c-brand); 
       display: flex; justify-content: space-between; align-items: center; color: var(--text-main);
     }
@@ -135,7 +142,7 @@
       padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       border: 1px solid var(--border);
     }
-    .step-header { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+    .step-header { font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
     .stat-row { display: flex; gap: 12px; }
     .stat-box {
       flex: 1; text-align: center; background: #f8fafc;
@@ -143,8 +150,8 @@
       border: 1px solid transparent;
     }
     .stat-box:active { background: #e2e8f0; }
-    .stat-num { font-size: 28px; font-weight: 800; line-height: 1.1; }
-    .stat-lbl { font-size: 12px; color: var(--text-sub); margin-top: 4px; font-weight: 600; }
+    .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; } /* Big Number */
+    .stat-lbl { font-size: 0.8rem; color: var(--text-sub); margin-top: 4px; font-weight: 600; }
     .num-done { color: var(--c-brand); }
     .num-todo { color: var(--c-danger); }
 
@@ -154,6 +161,7 @@
       overflow-x: auto; scroll-snap-type: x mandatory;
     }
     .loc-card {
+      /* Mobile: 42% width ensures ~2.2 cards visible (Peeking effect) */
       flex: 0 0 42%; min-width: 120px; 
       background: var(--bg-surface); border: 1px solid var(--border);
       border-radius: var(--radius-md); padding: 12px; text-align: center; 
@@ -165,59 +173,61 @@
       .loc-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-x: visible; }
       .loc-card { flex: unset; min-width: auto; }
     }
-    .loc-name { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
-    .loc-val { font-size: 24px; font-weight: 800; color: var(--c-brand); }
+    .loc-name { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
+    .loc-val { font-size: 1.5rem; font-weight: 800; color: var(--c-brand); }
 
     /* Summary Table */
-    .summary-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 8px; }
     .summary-table th, .summary-table td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: left; }
-    .summary-table th { color: var(--text-sub); font-weight: 600; font-size: 13px; }
+    .summary-table th { color: var(--text-sub); font-weight: 600; font-size: 0.85rem; }
     .summary-table tr:last-child td { border-bottom: none; }
     .summary-table td { color: var(--text-main); font-weight: 500; }
 
     /* =========================================
-       4. Tab 2: Operation (登錄與修改) - GRID LAYOUT
+       4. Tab 2: Operation List (Grid Layout)
        ========================================= */
     .op-toolbar { 
       display: flex; gap: 8px; margin-bottom: 16px; align-items: center; 
       background: #fff; padding: 10px; border-radius: var(--radius-md); box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .op-select { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; font-weight: 500; }
+    .op-select { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-weight: 500; }
     .btn-add { 
       padding: 8px 12px; background: #fff; border: 1px solid var(--c-brand); 
       color: var(--c-brand); border-radius: 6px; font-weight: 700; cursor: pointer; white-space: nowrap;
     }
 
-    /* List Card - Grid */
+    /* List Card - 3 Column Grid */
     .veh-card {
       background: var(--bg-surface); border-radius: var(--radius-md);
       padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer; transition: 0.2s; border: 1px solid transparent;
       
-      /* Grid Layout: [Info Stack] | [Status Stack] | [Btn] */
+      /* Grid: [Info Stack (Fixed Width)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
       display: grid;
-      grid-template-columns: 28% 1fr 40px; 
+      grid-template-columns: 85px 1fr 40px; 
       align-items: center; gap: 10px;
-      min-height: 60px;
+      min-height: 70px; /* Slight taller for stacked text */
     }
-    .veh-card:active { transform: scale(0.98); }
+    .veh-card:active { transform: scale(0.98); background-color: #f8fafc; }
 
-    /* Left Column Stack */
+    /* Left Column Stack (Vehicle Info) */
     .veh-col-left { display: flex; flex-direction: column; gap: 2px; }
-    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
-    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-sub); line-height: 1.2; }
+    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; }
+    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; }
     
-    /* Middle Column Stack */
+    /* Middle Column Stack (Status) */
     .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
-    .status-row { font-size: 15px; font-weight: 700; color: var(--c-brand); line-height: 1.3; }
-    .status-sep { border-top: 1px dashed #cbd5e1; margin: 4px 0; width: 100%; opacity: 0.7; }
-    .status-pending { color: #94a3b8; font-weight: 500; }
+    .status-row { font-size: 0.95rem; font-weight: 700; color: var(--c-brand); line-height: 1.3; }
+    .status-sep { border-top: 1px dashed #cbd5e1; margin: 4px 0; width: 100%; opacity: 0.5; }
+    .status-pending { color: var(--c-neutral); font-weight: 500; }
+    /* Dynamic status style */
+    .status-dynamic { font-size: 0.9rem; font-weight: 600; color: var(--c-brand-dark); }
 
     /* Expand Button (+) */
     .btn-expand {
       width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-      background: #f1f5f9; color: var(--c-brand); border-radius: 8px; 
-      font-weight: 800; font-size: 20px; border: 1px solid #e2e8f0;
+      background: #eff6ff; color: var(--c-brand); border-radius: 8px; 
+      font-weight: 800; font-size: 20px; border: 1px solid #dbeafe;
     }
 
     /* Completed State */
@@ -230,7 +240,7 @@
 
     .filter-bar {
       background: #eff6ff; color: var(--c-brand); padding: 8px 12px;
-      border-radius: 8px; margin-bottom: 12px; font-size: 14px; display: flex;
+      border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem; display: flex;
       justify-content: space-between; align-items: center; border: 1px solid #bfdbfe;
     }
     .filter-clear { text-decoration: underline; cursor: pointer; font-weight: 700; }
@@ -251,48 +261,52 @@
     .bottom-sheet.show { transform: translate(-50%, 0) !important; }
 
     .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .sheet-title { font-size: 22px; font-weight: 800; color: #000; }
+    .sheet-title { font-size: 1.4rem; font-weight: 800; color: #000; }
     
     /* 3-Column Grid: Label | Time | Buttons */
     .action-row { 
       display: grid; 
-      grid-template-columns: 140px 1fr auto; 
+      /* Label | Time (Center) | Buttons (Right) */
+      grid-template-columns: 130px 1fr auto; 
       align-items: center; 
       padding: 12px 0; 
       border-bottom: 1px dashed #eee; 
-      gap: 8px;
+      gap: 4px;
     }
     
-    .action-label { font-size: 16px; font-weight: 600; color: var(--text-main); text-align: left; }
-    .action-mid { text-align: center; } /* Center column */
-    .action-right { display: flex; justify-content: flex-end; } /* Right column */
+    .action-label { font-size: 1rem; font-weight: 700; color: var(--text-main); text-align: left; }
+    .action-mid { text-align: center; } 
+    .action-right { display: flex; justify-content: flex-end; } 
 
     /* Time & Status Colors */
-    .action-time { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--c-brand); }
-    .action-skip { font-size: 15px; color: var(--c-brand); font-weight: 700; }
+    .action-time { font-family: monospace; font-size: 1rem; font-weight: 700; color: var(--c-brand); }
+    .action-skip { font-size: 0.95rem; color: var(--c-brand); font-weight: 700; }
 
     .dynamic-sep { border-top: 4px solid #f1f5f9; margin: 16px -24px 16px -24px; }
-    .dynamic-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; color: var(--text-main); padding-top: 8px; }
+    .dynamic-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; color: var(--text-main); padding-top: 8px; }
 
     .btn-group { display: flex; gap: 8px; }
     .btn-solid { 
-      padding: 8px 14px; border-radius: 8px; border: none; 
-      font-size: 14px; font-weight: 700; color: white; cursor: pointer; min-width: 64px; 
+      padding: 8px 14px; border-radius: 6px; border: none; 
+      font-size: 0.9rem; font-weight: 700; color: white; cursor: pointer; min-width: 64px; 
       transition: opacity 0.2s;
     }
     .btn-solid:active { opacity: 0.8; }
     
     .btn-do    { background: var(--c-brand); }
-    .btn-skip  { background: var(--c-neutral); }
+    .btn-skip  { background: var(--c-neutral); } /* Gray */
     .btn-mod   { background-color: var(--c-success); }
     .btn-del   { background-color: var(--c-danger); }
     
-    .sheet-select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; font-weight: 500; width: 100%; }
+    .sheet-select { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; font-weight: 500; width: 100%; }
     
     /* Location Management List Styles */
-    .loc-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-    .loc-list-txt { font-size: 16px; font-weight: 700; color: var(--text-main); }
-    .btn-remove-loc { color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--c-danger); padding: 6px 12px; border-radius: 6px; border:none; }
+    .loc-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+    .loc-list-txt { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+    .btn-remove-loc { 
+      color: #fff; font-size: 0.85rem; font-weight: 700; cursor: pointer; 
+      background: var(--c-danger); padding: 6px 12px; border-radius: 6px; border:none; 
+    }
 
     /* Loading & Login */
     #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -694,7 +708,7 @@
         if(dynamicUpdates.length > 0) {
             finalHtml += `<div class="status-sep"></div>`;
             dynamicUpdates.forEach(u => {
-                finalHtml += `<div class="status-row">${u.name} ${u.time}</div>`;
+                finalHtml += `<div class="status-row status-dynamic">${u.name} ${u.time}</div>`;
             });
         }
 
