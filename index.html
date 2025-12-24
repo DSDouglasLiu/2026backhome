@@ -34,12 +34,44 @@
       --z-bottom-sheet: 1100;
       --z-overlay: 1000;
       --z-header: 500;
+
+      --app-max-width: 640px; /* 設定合適寬度 */
     }
 
     body { 
       margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      background: var(--color-bg-app); color: var(--color-text-main); 
-      padding-bottom: 80px; -webkit-tap-highlight-color: transparent;
+      background: #e5e7eb; /* 電腦版背景深灰 */
+      color: var(--color-text-main); 
+      padding-bottom: 0; /* padding 改由 appView 控制 */
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 核心容器設定 */
+    #appView {
+      max-width: var(--app-max-width);
+      margin: 0 auto;
+      background-color: var(--color-bg-app);
+      min-height: 100vh;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+      padding-bottom: 80px; /* 原本 body 的 padding 移到這裡 */
+    }
+
+    /* Bottom Sheet 修正 */
+    .bottom-sheet {
+      position: fixed; bottom: 0; left: 50%; right: auto; 
+      width: 100%; max-width: var(--app-max-width);
+      transform: translate(-50%, 100%); /* 初始隱藏 */
+      background: #fff;
+      border-radius: 20px 20px 0 0; padding: 24px; 
+      transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: var(--z-bottom-sheet); max-height: 85vh; overflow-y: auto; 
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      box-sizing: border-box;
+    }
+    
+    /* 這裡非常重要：要蓋掉原本的 .bottom-sheet.show */
+    .bottom-sheet.show {
+       transform: translate(-50%, 0) !important;
     }
 
     /* =========================================
