@@ -55,27 +55,53 @@
 
     .container { padding: 16px; }
 
-    /* Header */
+    /* =========================================
+       2. Header (Grid Layout)
+       ========================================= */
     .app-header {
       background: var(--color-surface); padding: 12px 16px;
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      display: flex; flex-direction: column; gap: 12px;
+      /* Grid Layout for absolute centering */
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
     }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; }
-    .app-title { font-size: 1.2rem; font-weight: 800; color: var(--color-brand-500); }
-    
+
+    /* Left: Title */
+    .app-title { font-size: 1.1rem; font-weight: 800; color: var(--color-brand-500); white-space: nowrap; }
+
+    /* Center: Time */
+    .header-clock { 
+      font-family: monospace; font-size: 1.1rem; font-weight: 700; color: var(--color-text-main); 
+      white-space: nowrap;
+    }
+
+    /* Right: Controls */
+    .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+
     /* Refresh Control */
     .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
     .refresh-btn { 
-      border: none; background: transparent; padding: 4px 10px; 
-      font-size: 12px; font-weight: 600; color: var(--color-text-sub); 
+      border: none; background: transparent; padding: 4px 8px; 
+      font-size: 11px; font-weight: 600; color: var(--color-text-sub); 
       border-radius: var(--radius-pill); cursor: pointer; transition: 0.2s;
     }
     .refresh-btn.active { background: #fff; color: var(--color-brand-500); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Tabs */
-    .nav-tabs { display: flex; gap: 8px; margin-top: 4px; }
+    /* Logout Button (Solid Dark Gray) */
+    .btn-logout {
+      background: #475569; color: #fff; border: none; padding: 6px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .btn-logout:active { opacity: 0.9; }
+
+    /* Tabs (Sub-header) */
+    .nav-tabs-wrapper {
+      grid-column: 1 / -1; /* Span full width */
+      display: flex; gap: 8px; margin-top: 8px;
+    }
     .nav-tab {
       flex: 1; padding: 10px; border: none; background: transparent;
       font-size: 15px; font-weight: 600; color: var(--color-text-sub);
@@ -86,6 +112,19 @@
     /* =========================================
        Dashboard (Tab 1)
        ========================================= */
+    /* Dashboard Filter Buttons */
+    .dash-filters {
+      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter-btn {
+      padding: 6px 16px; border-radius: var(--radius-pill); border: 1px solid transparent;
+      font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer;
+      background: #fff; color: var(--color-text-sub); border-color: var(--color-border);
+    }
+    .filter-btn.active { background: #334155; color: #fff; border-color: #334155; }
+    /* Dynamic Theme Colors for active state logic handled in JS or specific classes */
+
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
       font-size: 15px; font-weight: 700; margin-bottom: 12px; 
@@ -126,21 +165,36 @@
       border: none; border-radius: 8px; font-weight: 700; font-size: 15px;
     }
 
-    /* Location Scroll */
+    /* Location Scroll (Updated) */
     .loc-container {
-      display: flex; gap: 10px; padding-bottom: 4px; overflow-x: auto; 
-    }
-    @media (min-width: 768px) {
-      .loc-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); overflow-x: visible; }
+      display: flex; gap: 10px; padding-bottom: 8px; 
+      /* Mobile: Scroll with peeking */
+      overflow-x: auto; 
+      scroll-snap-type: x mandatory;
     }
     .loc-card {
-      min-width: 110px; background: var(--color-surface); border: 1px solid var(--color-border);
-      border-radius: var(--radius-md); padding: 12px; text-align: center; flex-shrink: 0;
+      /* Mobile: 45% width to show 2 cards + peeking on standard screens */
+      flex: 0 0 45%; 
+      min-width: 140px; 
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 12px; text-align: center; 
+      scroll-snap-align: start;
     }
+    /* Desktop: Grid 3 columns */
+    @media (min-width: 768px) {
+      .loc-container { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 12px;
+        overflow-x: visible; 
+      }
+      .loc-card { flex: unset; min-width: auto; }
+    }
+    
     .loc-name { font-size: 13px; font-weight: 600; color: var(--color-text-sub); margin-bottom: 4px; }
     .loc-val { font-size: 20px; font-weight: 800; color: var(--color-brand-500); }
 
-    /* Summary Table (Dynamic) - Updated Style */
+    /* Summary Table (Dynamic) */
     .summary-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
     .summary-table th, .summary-table td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: left; }
     .summary-table th { color: var(--color-text-sub); font-weight: 600; font-size: 13px; }
@@ -213,8 +267,11 @@
 
     .btn-group { display: flex; gap: 8px; }
     
-    /* Button Styles - Unified */
-    .btn-action-sm { padding: 6px 12px; border-radius: 6px; border: none; font-size: 14px; font-weight: 700; color: white; cursor: pointer; min-width: 60px; }
+    /* Unified Button Styles: All solid, small rounded */
+    .btn-solid { 
+      padding: 6px 14px; border-radius: 6px; border: none; 
+      font-size: 14px; font-weight: 700; color: white; cursor: pointer; min-width: 60px; 
+    }
     
     .btn-do    { background: var(--color-brand-500); } /* Stamp - Blue */
     .btn-skip  { background: #94a3b8; } /* Skip - Gray Solid */
@@ -246,19 +303,23 @@
 
 <div id="appView" class="hidden">
   <header class="app-header">
-    <div class="top-bar">
-      <div class="app-title">車流人流退場</div>
+    <div class="app-title">車流人流退場</div>
+    <div class="header-clock" id="headerClock">--:--:--</div>
+    <div class="header-right">
       <div class="refresh-ctrl" id="refreshCtrl"></div>
-      <button class="refresh-btn" onclick="logout()">登出</button>
+      <button class="btn-logout" onclick="logout()">登出</button>
     </div>
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="switchTab('dash')">看板</button>
-      <button class="nav-tab" onclick="switchTab('op')">作業</button>
+    <div class="nav-tabs-wrapper">
+      <div class="nav-tabs" style="flex:1">
+        <button class="nav-tab active" onclick="switchTab('dash')">看板</button>
+        <button class="nav-tab" onclick="switchTab('op')">作業</button>
+      </div>
     </div>
   </header>
 
   <div class="container">
     <div id="tabDash" class="dash-section">
+      <div class="dash-filters" id="dashFilters"></div>
       <div id="dashContent"></div>
     </div>
 
@@ -319,6 +380,7 @@
   let currentUser = null;
   let allData = {};
   let currentSheetName = SHEET_CONFIGS[0].key;
+  let currentDashFilter = 'ALL'; // 'ALL' or sheet key
   let activeFilter = null;
   let refreshTimer = null;
   let refreshMs = 60000;
@@ -354,8 +416,17 @@
     
     renderRefreshCtrl();
     renderSheetSelector();
+    renderDashFilters(); // New filter buttons
     loadAllData(true);
     startTimer();
+    startClock();
+  }
+
+  function startClock() {
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+    }, 1000);
   }
 
   async function loadAllData(force = false) {
@@ -382,11 +453,44 @@
   }
 
   // ================= UI: DASHBOARD =================
+  function renderDashFilters() {
+    const box = document.getElementById('dashFilters');
+    box.innerHTML = '';
+    
+    // ALL Button
+    const allBtn = document.createElement('button');
+    allBtn.className = `filter-btn ${currentDashFilter === 'ALL' ? 'active' : ''}`;
+    allBtn.textContent = '全部情報';
+    allBtn.onclick = () => { currentDashFilter = 'ALL'; renderDashFilters(); renderDashboard(); };
+    box.appendChild(allBtn);
+
+    SHEET_CONFIGS.forEach(cfg => {
+      const btn = document.createElement('button');
+      const isActive = currentDashFilter === cfg.key;
+      btn.className = `filter-btn ${isActive ? 'active' : ''}`;
+      // Logic for colored buttons
+      if(isActive) {
+        btn.style.backgroundColor = cfg.color;
+        btn.style.borderColor = cfg.color;
+        btn.style.color = '#fff';
+      } else {
+        btn.style.color = cfg.color;
+        btn.style.borderColor = cfg.color;
+      }
+      btn.textContent = cfg.key;
+      btn.onclick = () => { currentDashFilter = cfg.key; renderDashFilters(); renderDashboard(); };
+      box.appendChild(btn);
+    });
+  }
+
   function renderDashboard() {
     const container = document.getElementById('dashContent');
     container.innerHTML = '';
 
     SHEET_CONFIGS.forEach(cfg => {
+      // Filter Logic
+      if(currentDashFilter !== 'ALL' && currentDashFilter !== cfg.key) return;
+
       const data = allData[cfg.key];
       if(!data || !data.headers) return; 
 
@@ -646,8 +750,8 @@
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
-               <button class="btn-action-sm btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '${val}')">修改</button>
-               <button class="btn-action-sm btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
+               <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '${val}')">修改</button>
+               <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
              right.appendChild(div);
           }
@@ -657,8 +761,8 @@
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
-               <button class="btn-action-sm btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '')">修改</button>
-               <button class="btn-action-sm btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
+               <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '')">修改</button>
+               <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
              right.appendChild(div);
           }
@@ -667,8 +771,8 @@
           if(!isViewer) {
             const div = document.createElement('div'); div.className = 'btn-group';
             div.innerHTML = `
-              <button class="btn-action-sm btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
-              <button class="btn-action-sm btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
+              <button class="btn-solid btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
+              <button class="btn-solid btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
             `;
             right.appendChild(div);
           } else {
@@ -738,6 +842,9 @@
     currentSheetName = sheetKey;
     activeFilter = { step, status };
     document.getElementById('sheetSelector').value = sheetKey;
+    // Auto select dashboard filter as well
+    currentDashFilter = sheetKey;
+    renderDashFilters();
     switchTab('op');
   }
 
