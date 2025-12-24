@@ -39,7 +39,7 @@
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-pill: 50px;
-      --app-max-width: 1080px; 
+      --app-max-width: 800px; 
       
       /* Layers */
       --z-bottom: 1100;
@@ -196,27 +196,28 @@
       
       /* Grid Layout: Car | Area | Status | Btn */
       display: grid;
-      grid-template-columns: 2fr 2fr 3fr 40px; 
-      align-items: center; gap: 10px;
+      grid-template-columns: 22fr 22fr 46fr 40px; 
+      align-items: center; gap: 8px;
       min-height: 60px;
     }
     .veh-card:active { transform: scale(0.98); }
 
     /* Text Styles */
-    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); }
-    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-main); }
+    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     .veh-status { 
       font-size: 15px; font-weight: 700; color: var(--c-brand); 
-      white-space: normal; line-height: 1.3;
-      text-align: left; /* Align left for readability in grid */
+      white-space: pre-line; /* Handle multi-line */
+      line-height: 1.4;
+      text-align: left; 
     }
 
     /* Expand Button (+) */
     .btn-expand {
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      background: #f1f5f9; color: var(--c-brand); border-radius: 6px; 
-      font-weight: 800; font-size: 18px; border: 1px solid #e2e8f0;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: #f1f5f9; color: var(--c-brand); border-radius: 8px; 
+      font-weight: 800; font-size: 20px; border: 1px solid #e2e8f0;
     }
 
     /* Completed State */
@@ -235,7 +236,7 @@
     .filter-clear { text-decoration: underline; cursor: pointer; font-weight: 700; }
 
     /* =========================================
-       5. Bottom Sheet
+       5. Bottom Sheet (Three Column Grid)
        ========================================= */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: var(--z-overlay); backdrop-filter: blur(2px); }
     .bottom-sheet {
@@ -252,10 +253,24 @@
     .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .sheet-title { font-size: 22px; font-weight: 800; color: #000; }
     
-    .action-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
-    .action-label { font-size: 16px; font-weight: 600; color: var(--text-main); }
-    .action-time { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--c-brand); margin-right: 12px; }
-    .action-skip { font-size: 15px; color: var(--c-brand); font-weight: 700; margin-right: 12px; }
+    /* 3-Column Grid: Label | Time | Buttons */
+    .action-row { 
+      display: grid; 
+      grid-template-columns: 140px 1fr auto; 
+      align-items: center; 
+      padding: 12px 0; 
+      border-bottom: 1px dashed #eee; 
+      gap: 8px;
+    }
+    
+    .action-label { font-size: 16px; font-weight: 600; color: var(--text-main); text-align: left; }
+    
+    .action-mid { text-align: center; } /* Center column */
+    .action-right { display: flex; justify-content: flex-end; } /* Right column */
+
+    /* Time & Status Colors */
+    .action-time { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--c-brand); }
+    .action-skip { font-size: 15px; color: var(--c-brand); font-weight: 700; }
 
     .dynamic-sep { border-top: 4px solid #f1f5f9; margin: 16px -24px 16px -24px; }
     .dynamic-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; color: var(--text-main); padding-top: 8px; }
@@ -278,7 +293,7 @@
     /* Location Management List Styles */
     .loc-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
     .loc-list-txt { font-size: 16px; font-weight: 700; color: var(--text-main); }
-    .btn-remove-loc { color: var(--c-danger); font-size: 13px; font-weight: 600; cursor: pointer; background: #fff0f0; padding: 4px 8px; border-radius: 4px; border:none; }
+    .btn-remove-loc { color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--c-danger); padding: 6px 12px; border-radius: 6px; border:none; }
 
     /* Loading & Login */
     #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -637,36 +652,67 @@
     // Prepare rows with Progress calculation for sorting
     const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
     const renderItems = rows.map((row, idx) => {
-        // Calculate progress (count of completed steps)
-        let completedCount = 0;
-        let lastStatus = '尚未開始';
-        let isAllDone = true;
-
-        // Combine steps
-        let allSteps = [...cfg.steps];
-        const dynamicHeaders = header.filter(h => h.isDynamic).map(h => h.name);
-        allSteps = allSteps.concat(dynamicHeaders);
-
-        allSteps.forEach(step => {
+        // 1. Calculate Standard Progress & Find Latest Standard Status
+        let stdCompletedCount = 0;
+        let latestStdTime = ''; // Used for comparison
+        let displayStatus = '尚未開始';
+        
+        cfg.steps.forEach(step => {
             const hIdx = header.findIndex(h => h.name === step);
             const val = (row[hIdx] || '').trim();
             if(val && val !== '-') {
-                completedCount++;
-                // Update last status
-                if(val === 'Skip') lastStatus = `${step} (略過)`;
-                else if(step === cfg.parkingField) lastStatus = val;
-                else lastStatus = `${step} ${val}`;
-            } else {
-                isAllDone = false;
+                stdCompletedCount++;
+                // Update latest standard status
+                if(step === cfg.parkingField) {
+                    displayStatus = val;
+                    // Parking doesn't usually have time, treat as "now" or ignore for time comparison?
+                    // Let's treat it as a status update.
+                } else if(val === 'Skip') {
+                    displayStatus = `${step} (略過)`;
+                    // Skip has no time, so it won't be overridden by dynamic stations unless dynamic has time?
+                    // Let's assume Skip is "current".
+                } else {
+                    displayStatus = `${step} ${val}`;
+                    latestStdTime = val; // "HH:mm:ss"
+                }
             }
         });
 
-        return { row, completedCount, lastStatus, isAllDone, originalIdx: idx };
+        // 2. Find Matching Dynamic Stations (Time > Latest Std Time)
+        const dynamicHeaders = header.filter(h => h.isDynamic);
+        let dynamicUpdates = [];
+        
+        dynamicHeaders.forEach(dh => {
+            const hIdx = header.indexOf(dh);
+            const val = (row[hIdx] || '').trim();
+            if(val && val !== '-' && val !== 'Skip') {
+                // If there is a standard time, compare. If no standard time (only Skip or nothing), show dynamic.
+                if(!latestStdTime || val > latestStdTime) {
+                    dynamicUpdates.push({ name: dh.name, time: val });
+                }
+            }
+        });
+
+        // Sort dynamic updates by time ascending
+        dynamicUpdates.sort((a, b) => a.time.localeCompare(b.time));
+
+        // 3. Construct Final Status String (Multi-line)
+        let finalStatusHtml = displayStatus;
+        if(dynamicUpdates.length > 0) {
+            dynamicUpdates.forEach(u => {
+                finalStatusHtml += `\n${u.name} ${u.time}`;
+            });
+        }
+
+        // Check if ALL standard steps are done
+        const isAllDone = stdCompletedCount === cfg.steps.length;
+
+        return { row, stdCompletedCount, finalStatusHtml, isAllDone, originalIdx: idx };
     });
 
     // Sort: Progress (Ascending - less done first), then Original Index
     renderItems.sort((a, b) => {
-        if (a.completedCount !== b.completedCount) return a.completedCount - b.completedCount;
+        if (a.stdCompletedCount !== b.stdCompletedCount) return a.stdCompletedCount - b.stdCompletedCount;
         return a.originalIdx - b.originalIdx;
     });
 
@@ -681,26 +727,27 @@
       
       // Determine color for status
       let statusStyle = '';
-      if(item.lastStatus.includes('略過')) statusStyle = 'color: var(--c-brand);'; // Blue for Skip as per request
-      else if(item.lastStatus === '尚未開始') statusStyle = 'color: #94a3b8; font-weight:500;';
+      if(item.finalStatusHtml.includes('略過')) statusStyle = 'color: var(--c-brand);'; 
+      else if(item.finalStatusHtml === '尚未開始') statusStyle = 'color: #94a3b8; font-weight:500;';
       
       const btnIcon = item.isAllDone ? '✓' : '+';
       
       card.innerHTML = `
         <div class="txt-car">${item.row[carIdx] || ''}</div>
         <div class="txt-area">${item.row[areaIdx] || ''}</div>
-        <div class="veh-status" style="${statusStyle}">${item.lastStatus}</div>
+        <div class="veh-status" style="${statusStyle}">${item.finalStatusHtml}</div>
         <div class="btn-expand">${btnIcon}</div>
       `;
-      card.onclick = () => openBottomSheet(item.row, header, carIdx);
+      card.onclick = () => openBottomSheet(item.row, header, carIdx, areaIdx);
       container.appendChild(card);
     });
   }
 
   // ================= MANAGERS =================
-  function openBottomSheet(row, header, carIdx) {
+  function openBottomSheet(row, header, carIdx, areaIdx) {
     const title = document.getElementById('sheetTitle');
-    title.textContent = row[carIdx];
+    // Title format: "291-CC 安和1車"
+    title.textContent = `${row[carIdx]} ${row[areaIdx]}`;
     const body = document.getElementById('sheetBody');
     body.innerHTML = '';
 
@@ -726,12 +773,15 @@
       const rowDiv = document.createElement('div');
       rowDiv.className = 'action-row';
       const left = document.createElement('div');
-      left.innerHTML = `<div class="action-label">${step}</div>`;
+      left.className = 'action-label';
+      left.textContent = step;
       rowDiv.appendChild(left);
 
+      const mid = document.createElement('div');
+      mid.className = 'action-mid';
+      
       const right = document.createElement('div');
-      right.style.display = 'flex';
-      right.style.alignItems = 'center';
+      right.className = 'action-right';
       
       if(step === cfg.parkingField) {
         if(!isViewer) {
@@ -739,14 +789,16 @@
           sel.className = 'sheet-select';
           sel.innerHTML = `<option value="">---- 清除 ----</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
+          // For parking, put select in middle? Or right? 
+          // Previous design put it in right. Let's put in right for better touch target.
           right.appendChild(sel);
         } else {
-          right.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
+          mid.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
         }
       } 
       else {
         if(val && val !== 'Skip' && val !== '-') {
-          right.innerHTML = `<span class="action-time">${val}</span>`;
+          mid.innerHTML = `<span class="action-time">${val}</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
@@ -756,7 +808,7 @@
              right.appendChild(div);
           }
         } else if(val === 'Skip' || val === '-') {
-          right.innerHTML = `<span class="action-skip">已略過</span>`;
+          mid.innerHTML = `<span class="action-skip">已略過</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
@@ -766,6 +818,7 @@
              right.appendChild(div);
           }
         } else {
+          // Empty
           if(!isViewer) {
             const div = document.createElement('div'); div.className = 'btn-group';
             div.innerHTML = `
@@ -774,10 +827,11 @@
             `;
             right.appendChild(div);
           } else {
-            right.innerHTML = '<span style="color:#ccc">未完成</span>';
+            // mid.innerHTML = '<span style="color:#ccc">-</span>';
           }
         }
       }
+      rowDiv.appendChild(mid);
       rowDiv.appendChild(right);
       body.appendChild(rowDiv);
     });
@@ -789,7 +843,7 @@
   // ================= LOCATION MANAGEMENT (TAB 1) =================
   function openLocationSheet(locName, sheetKey) {
     const title = document.getElementById('sheetTitle');
-    title.textContent = `管理: ${locName}`;
+    title.textContent = `${locName}`; // Just location name
     const body = document.getElementById('sheetBody');
     body.innerHTML = '';
 
@@ -814,7 +868,7 @@
             const div = document.createElement('div');
             div.className = 'loc-list-item';
             div.innerHTML = `
-                <div class="loc-list-txt">${r[areaIdx]} - ${r[carIdx]}</div>
+                <div class="loc-list-txt">${r[areaIdx]} ${r[carIdx]}</div>
                 <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
             `;
             body.appendChild(div);
@@ -838,8 +892,8 @@
         sel.id = 'selAddLocCar';
         sel.className = 'sheet-select';
         sel.style.marginBottom = '12px';
-        sel.innerHTML = `<option value="">請選擇尚未停車的車輛...</option>` + 
-            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} - ${r[carIdx]}</option>`).join('');
+        sel.innerHTML = `<option value="">請選擇車輛</option>` + 
+            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`).join('');
         
         const btn = document.createElement('button');
         btn.className = 'btn-solid btn-do';
@@ -862,11 +916,10 @@
   }
 
   async function doAssignLoc(sheetKey, carNo, colName, value) {
-    // Helper to call API with specific sheet context
     const originalSheet = currentSheetName;
-    currentSheetName = sheetKey; // Switch context for doAction
+    currentSheetName = sheetKey; 
     await doAction(carNo, colName, value, true);
-    currentSheetName = originalSheet; // Restore
+    currentSheetName = originalSheet; 
   }
 
   // ================= ACTIONS =================
