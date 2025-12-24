@@ -12,19 +12,18 @@
     :root {
       /* Brand Colors */
       --c-brand: #1f6fe5;       /* 主色藍 */
-      --c-brand-dark: #1e40af;  /* 深藍 (Active) */
+      --c-brand-dark: #1e40af;  /* 深藍 */
       
       /* Functional Colors */
       --c-success: #22c55e;     /* 修改/綠 */
       --c-danger: #ef4444;      /* 刪除/紅 */
       --c-neutral: #64748b;     /* 略過/灰 */
       --c-dark: #334155;        /* 系統/深灰 */
-
-      /* Theme Colors */
-      --c-teal: #059669;
-      --c-orange: #f97316;
-      --c-purple: #7c3aed;
-      --c-pink: #db2777;
+      
+      /* Backgrounds for Completed State */
+      --bg-success-light: #ecfdf5; 
+      --border-success: #10b981;
+      --text-success: #047857;
 
       /* UI Bases */
       --bg-body: #e5e7eb;
@@ -64,30 +63,26 @@
     .container { padding: 16px; }
 
     /* =========================================
-       2. Header & Navigation (Grid Layout)
+       2. Header (Grid Layout)
        ========================================= */
     .app-header {
       background: var(--bg-surface); padding: 12px 16px;
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display: grid;
-      grid-template-columns: 1fr auto 1fr; /* Left - Center - Right */
+      grid-template-columns: 1fr auto 1fr;
       align-items: center; gap: 8px;
     }
 
-    /* Left: Title */
     .app-title { font-size: 1.1rem; font-weight: 800; color: var(--c-brand); white-space: nowrap; }
 
-    /* Center: Time (Monospace for stability) */
     .header-clock { 
       font-family: monospace; font-size: 1.1rem; font-weight: 800; 
       color: var(--text-main); white-space: nowrap; 
     }
 
-    /* Right: Controls */
     .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 
-    /* Refresh Buttons */
     .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
     .refresh-btn { 
       border: none; background: transparent; padding: 4px 8px; 
@@ -96,32 +91,27 @@
     }
     .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Logout Button (Solid Dark Gray) */
     .btn-logout {
       background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
       border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
-    .btn-logout:active { opacity: 0.9; }
 
     /* Level 1 Navigation (Big Pills) */
     .nav-tabs-wrapper {
-      grid-column: 1 / -1; /* Full width row */
+      grid-column: 1 / -1;
       display: flex; gap: 10px; margin-top: 12px; justify-content: center;
     }
     .nav-tab {
       flex: 1; padding: 10px 0; border: none; border-radius: var(--radius-pill);
       font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s;
       text-align: center; white-space: nowrap;
+      background: #fff; color: var(--c-brand); border: 1px solid var(--c-brand);
     }
-    /* Inactive: White bg, Blue border/text */
-    .nav-tab { background: #fff; color: var(--c-brand); border: 1px solid var(--c-brand); }
-    /* Active: Blue bg, White text */
     .nav-tab.active { background: var(--c-brand); color: #fff; border-color: var(--c-brand); box-shadow: 0 2px 6px rgba(31, 111, 229, 0.3); }
 
     /* =========================================
        3. Tab 1: Overall Info (看板)
        ========================================= */
-    /* Level 2 Filters */
     .dash-filters {
       display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
       -webkit-overflow-scrolling: touch;
@@ -132,7 +122,6 @@
       background: #fff; color: var(--text-sub); border-color: var(--border);
       transition: 0.2s;
     }
-    /* Active State handled by JS inline styles for themes */
     
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
@@ -141,7 +130,6 @@
       display: flex; justify-content: space-between; align-items: center; color: var(--text-main);
     }
     
-    /* Stat Cards */
     .stat-card {
       background: var(--bg-surface); border-radius: var(--radius-lg);
       padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -160,35 +148,19 @@
     .num-done { color: var(--c-brand); }
     .num-todo { color: var(--c-danger); }
 
-    /* Assign Block */
-    .assign-block {
-      background: #fff7ed; border: 2px dashed var(--c-orange);
-      border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px;
-    }
-    .assign-title { font-size: 14px; font-weight: 800; color: #c2410c; margin-bottom: 8px; }
-    .form-select {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;
-      background: #fff; font-size: 15px; margin-bottom: 8px; font-weight: 500;
-    }
-    .btn-assign {
-      width: 100%; padding: 10px; background: var(--c-orange); color: white;
-      border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer;
-    }
-
-    /* Location Scroll (Peeking Effect) */
+    /* Location Cards (Peeking & Grid) */
     .loc-container {
       display: flex; gap: 10px; padding-bottom: 8px; 
       overflow-x: auto; scroll-snap-type: x mandatory;
     }
     .loc-card {
-      /* Mobile: 42% width ensures ~2.2 cards are visible (Peeking) */
-      flex: 0 0 42%; 
-      min-width: 120px; 
+      flex: 0 0 42%; min-width: 120px; 
       background: var(--bg-surface); border: 1px solid var(--border);
       border-radius: var(--radius-md); padding: 12px; text-align: center; 
       scroll-snap-align: start; cursor: pointer;
+      transition: 0.2s;
     }
-    /* Desktop: 3 Columns Grid */
+    .loc-card:active { transform: scale(0.98); background: #f1f5f9; }
     @media (min-width: 768px) {
       .loc-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-x: visible; }
       .loc-card { flex: unset; min-width: auto; }
@@ -204,7 +176,7 @@
     .summary-table td { color: var(--text-main); font-weight: 500; }
 
     /* =========================================
-       4. Tab 2: Operation (登錄與修改)
+       4. Tab 2: Operation (登錄與修改) - GRID LAYOUT
        ========================================= */
     .op-toolbar { 
       display: flex; gap: 8px; margin-bottom: 16px; align-items: center; 
@@ -216,20 +188,44 @@
       color: var(--c-brand); border-radius: 6px; font-weight: 700; cursor: pointer; white-space: nowrap;
     }
 
-    /* List Card - Typography Update */
+    /* List Card - Grid */
     .veh-card {
       background: var(--bg-surface); border-radius: var(--radius-md);
-      padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      cursor: pointer; transition: 0.2s;
-      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+      
+      /* Grid Layout: Car | Area | Status | Btn */
+      display: grid;
+      grid-template-columns: 2fr 2fr 3fr 40px; 
+      align-items: center; gap: 10px;
       min-height: 60px;
     }
-    .veh-card:active { transform: scale(0.98); background-color: #f1f5f9; }
+    .veh-card:active { transform: scale(0.98); }
 
-    .veh-left { display: flex; align-items: center; gap: 12px; }
-    .txt-car { font-size: 20px; font-weight: 800; color: #000; } /* Big Black */
-    .txt-area { font-size: 16px; font-weight: 500; color: var(--text-sub); } /* Medium Gray */
-    .veh-status { font-size: 16px; font-weight: 700; color: var(--c-brand); text-align: right; white-space: nowrap; }
+    /* Text Styles */
+    .txt-car { font-size: 18px; font-weight: 800; color: var(--text-main); }
+    .txt-area { font-size: 18px; font-weight: 800; color: var(--text-main); }
+    
+    .veh-status { 
+      font-size: 15px; font-weight: 700; color: var(--c-brand); 
+      white-space: normal; line-height: 1.3;
+      text-align: left; /* Align left for readability in grid */
+    }
+
+    /* Expand Button (+) */
+    .btn-expand {
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      background: #f1f5f9; color: var(--c-brand); border-radius: 6px; 
+      font-weight: 800; font-size: 18px; border: 1px solid #e2e8f0;
+    }
+
+    /* Completed State */
+    .veh-card.completed {
+      background-color: var(--bg-success-light);
+      border-color: var(--border-success);
+    }
+    .veh-card.completed .veh-status { color: var(--text-success); }
+    .veh-card.completed .btn-expand { background: var(--border-success); color: #fff; border-color: var(--border-success); content: "✓"; }
 
     .filter-bar {
       background: #eff6ff; color: var(--c-brand); padding: 8px 12px;
@@ -239,7 +235,7 @@
     .filter-clear { text-decoration: underline; cursor: pointer; font-weight: 700; }
 
     /* =========================================
-       5. Bottom Sheet & Buttons
+       5. Bottom Sheet
        ========================================= */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: var(--z-overlay); backdrop-filter: blur(2px); }
     .bottom-sheet {
@@ -258,18 +254,13 @@
     
     .action-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
     .action-label { font-size: 16px; font-weight: 600; color: var(--text-main); }
-    
-    /* Time & Status Colors */
     .action-time { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--c-brand); margin-right: 12px; }
-    .action-skip { font-size: 15px; color: var(--c-brand); font-weight: 700; margin-right: 12px; } /* Blue for skip */
+    .action-skip { font-size: 15px; color: var(--c-brand); font-weight: 700; margin-right: 12px; }
 
-    /* Dynamic Section */
     .dynamic-sep { border-top: 4px solid #f1f5f9; margin: 16px -24px 16px -24px; }
     .dynamic-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; color: var(--text-main); padding-top: 8px; }
 
     .btn-group { display: flex; gap: 8px; }
-    
-    /* Unified Button Styles: Solid Small Rounded */
     .btn-solid { 
       padding: 8px 14px; border-radius: 8px; border: none; 
       font-size: 14px; font-weight: 700; color: white; cursor: pointer; min-width: 64px; 
@@ -277,12 +268,17 @@
     }
     .btn-solid:active { opacity: 0.8; }
     
-    .btn-do    { background: var(--c-brand); }   /* Stamp - Blue */
-    .btn-skip  { background: var(--c-neutral); } /* Skip - Gray Solid */
-    .btn-mod   { background-color: var(--c-success); } /* Modify - Green */
-    .btn-del   { background-color: var(--c-danger); }  /* Delete - Red */
+    .btn-do    { background: var(--c-brand); }
+    .btn-skip  { background: var(--c-neutral); }
+    .btn-mod   { background-color: var(--c-success); }
+    .btn-del   { background-color: var(--c-danger); }
     
-    .sheet-select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; font-weight: 500; }
+    .sheet-select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 15px; font-weight: 500; width: 100%; }
+    
+    /* Location Management List Styles */
+    .loc-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .loc-list-txt { font-size: 16px; font-weight: 700; color: var(--text-main); }
+    .btn-remove-loc { color: var(--c-danger); font-size: 13px; font-weight: 600; cursor: pointer; background: #fff0f0; padding: 4px 8px; border-radius: 4px; border:none; }
 
     /* Loading & Login */
     #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -307,7 +303,7 @@
 
 <div id="appView" class="hidden">
   <header class="app-header">
-    <div class="app-title">車流人流退場</div>
+    <div class="app-title">2026水陸法會退場</div>
     <div class="header-clock" id="headerClock">--:--:--</div>
     <div class="header-right">
       <div class="refresh-ctrl" id="refreshCtrl"></div>
@@ -382,7 +378,7 @@
   let currentUser = null;
   let allData = {};
   let currentSheetName = SHEET_CONFIGS[0].key;
-  let currentDashFilter = 'ALL'; // 'ALL' or sheet key
+  let currentDashFilter = 'ALL';
   let activeFilter = null;
   let refreshTimer = null;
   let refreshMs = 60000;
@@ -459,7 +455,6 @@
     const box = document.getElementById('dashFilters');
     box.innerHTML = '';
     
-    // ALL Button (Dark Gray)
     const allBtn = document.createElement('button');
     const isAllActive = currentDashFilter === 'ALL';
     allBtn.className = `filter-btn`;
@@ -472,7 +467,6 @@
     allBtn.onclick = () => { currentDashFilter = 'ALL'; renderDashFilters(); renderDashboard(); };
     box.appendChild(allBtn);
 
-    // Sheet Buttons (Colored)
     SHEET_CONFIGS.forEach(cfg => {
       const btn = document.createElement('button');
       const isActive = currentDashFilter === cfg.key;
@@ -514,13 +508,7 @@
 
       inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
 
-      // Assign Block
-      if(parkingStep && currentUser.permission === 'ADMIN') {
-        const assignBlock = createAssignBlock(data, cfg, parkingStep);
-        if(assignBlock) wrapper.appendChild(assignBlock);
-      }
-
-      // Location Stats
+      // Location Stats (Clickable)
       if(parkingStep) {
         const locContainer = document.createElement('div');
         locContainer.className = 'loc-container';
@@ -535,12 +523,15 @@
           const card = document.createElement('div');
           card.className = 'loc-card';
           card.innerHTML = `<div class="loc-name">${loc}</div><div class="loc-val">${counts[loc]}</div>`;
+          // Click to Manage Location
+          if(currentUser.permission === 'ADMIN' || currentUser.permission === 'LEADER') {
+             card.onclick = () => openLocationSheet(loc, cfg.key);
+          }
           locContainer.appendChild(card);
         });
         wrapper.appendChild(locContainer);
       }
 
-      // Outbound
       if(outbound.length > 0) {
         const outTitle = document.createElement('div');
         outTitle.className = 'step-header';
@@ -550,7 +541,6 @@
         outbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
       }
 
-      // Summary Table
       const dynamicHeaders = data.headers.filter(h => h.isDynamic);
       if(dynamicHeaders.length > 0) {
         const summaryBox = createSummaryTable(data, dynamicHeaders, cfg);
@@ -581,7 +571,6 @@
     const box = document.createElement('div');
     box.className = 'stat-card'; 
     box.style.padding = '12px';
-    
     let html = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}; margin-top:0;">新增站點紀錄</div>
     <table class="summary-table">
       <tr><th>車號</th><th>區域</th><th>地點</th><th>時間</th></tr>`;
@@ -618,33 +607,7 @@
     return card;
   }
 
-  function createAssignBlock(data, cfg, parkingStep) {
-    const colIdx = data.headers.findIndex(h => h.name === parkingStep);
-    const candidates = data.rows.filter(r => {
-      const val = (r[colIdx] || '').trim();
-      return !val || val === '-';
-    });
-    if(candidates.length === 0) return null;
-
-    const div = document.createElement('div');
-    div.className = 'assign-block';
-    const carIdx = data.headers.findIndex(h => h.name === '車號');
-    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
-    
-    let carOpts = `<option value="">請選擇車輛...</option>`;
-    candidates.forEach((r) => carOpts += `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`);
-    let locOpts = `<option value="">請選擇位置...</option>` + STOP_OPTIONS.map(s => `<option value="${s}">${s}</option>`).join('');
-
-    div.innerHTML = `
-      <div class="assign-title">車暫停位置登錄</div>
-      <select class="form-select" id="assignLoc_${cfg.key}">${locOpts}</select>
-      <select class="form-select" id="assignCar_${cfg.key}">${carOpts}</select>
-      <button class="btn-assign" onclick="doQuickAssign('${cfg.key}', '${parkingStep}')">確定</button>
-    `;
-    return div;
-  }
-
-  // ================= UI: LIST =================
+  // ================= UI: LIST (TAB 2) =================
   function renderList() {
     const data = allData[currentSheetName];
     if(!data || !data.headers) return;
@@ -657,6 +620,7 @@
     if (areaIdx === -1) areaIdx = header.findIndex(h => h.name.includes('區域'));
 
     let rows = data.rows;
+    // Apply Filter
     if(activeFilter) {
       document.getElementById('filterMsg').classList.remove('hidden');
       document.getElementById('filterText').textContent = `篩選: ${activeFilter.step} (${activeFilter.status === 'done' ? '完成' : '未完成'})`;
@@ -670,41 +634,70 @@
       document.getElementById('filterMsg').classList.add('hidden');
     }
 
-    if(rows.length === 0) {
+    // Prepare rows with Progress calculation for sorting
+    const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
+    const renderItems = rows.map((row, idx) => {
+        // Calculate progress (count of completed steps)
+        let completedCount = 0;
+        let lastStatus = '尚未開始';
+        let isAllDone = true;
+
+        // Combine steps
+        let allSteps = [...cfg.steps];
+        const dynamicHeaders = header.filter(h => h.isDynamic).map(h => h.name);
+        allSteps = allSteps.concat(dynamicHeaders);
+
+        allSteps.forEach(step => {
+            const hIdx = header.findIndex(h => h.name === step);
+            const val = (row[hIdx] || '').trim();
+            if(val && val !== '-') {
+                completedCount++;
+                // Update last status
+                if(val === 'Skip') lastStatus = `${step} (略過)`;
+                else if(step === cfg.parkingField) lastStatus = val;
+                else lastStatus = `${step} ${val}`;
+            } else {
+                isAllDone = false;
+            }
+        });
+
+        return { row, completedCount, lastStatus, isAllDone, originalIdx: idx };
+    });
+
+    // Sort: Progress (Ascending - less done first), then Original Index
+    renderItems.sort((a, b) => {
+        if (a.completedCount !== b.completedCount) return a.completedCount - b.completedCount;
+        return a.originalIdx - b.originalIdx;
+    });
+
+    if(renderItems.length === 0) {
       container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">無符合資料</div>';
       return;
     }
 
-    rows.forEach(row => {
+    renderItems.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'veh-card';
+      card.className = `veh-card ${item.isAllDone ? 'completed' : ''}`;
       
-      let statusText = '準備中';
-      let statusColorClass = 'color: #64748b'; // default gray
+      // Determine color for status
+      let statusStyle = '';
+      if(item.lastStatus.includes('略過')) statusStyle = 'color: var(--c-brand);'; // Blue for Skip as per request
+      else if(item.lastStatus === '尚未開始') statusStyle = 'color: #94a3b8; font-weight:500;';
       
-      // Determine latest status
-      const parkingStep = SHEET_CONFIGS.find(c=>c.key===currentSheetName).parkingField;
-      if(parkingStep) {
-        const pIdx = header.findIndex(h => h.name === parkingStep);
-        const pVal = (row[pIdx] || '').trim();
-        if(pVal) { statusText = pVal; statusColorClass = 'color: var(--c-brand)'; }
-      }
-      
-      // Basic check for skipping (simplified)
-      // Ideally we check the LAST non-empty step.
+      const btnIcon = item.isAllDone ? '✓' : '+';
       
       card.innerHTML = `
-        <div class="veh-left">
-          <div class="txt-car">${row[carIdx] || ''}</div>
-          <div class="txt-area">${row[areaIdx] || ''}</div>
-        </div>
-        <div class="veh-status" style="${statusColorClass}">${statusText}</div>
+        <div class="txt-car">${item.row[carIdx] || ''}</div>
+        <div class="txt-area">${item.row[areaIdx] || ''}</div>
+        <div class="veh-status" style="${statusStyle}">${item.lastStatus}</div>
+        <div class="btn-expand">${btnIcon}</div>
       `;
-      card.onclick = () => openBottomSheet(row, header, carIdx);
+      card.onclick = () => openBottomSheet(item.row, header, carIdx);
       container.appendChild(card);
     });
   }
 
+  // ================= MANAGERS =================
   function openBottomSheet(row, header, carIdx) {
     const title = document.getElementById('sheetTitle');
     title.textContent = row[carIdx];
@@ -720,7 +713,6 @@
     allSteps = allSteps.concat(dynamicHeaders);
 
     allSteps.forEach((step, index) => {
-      // Dynamic Section Divider
       if(index === standardCount) {
         const sep = document.createElement('div'); sep.className = 'dynamic-sep';
         const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '新增站點';
@@ -754,7 +746,6 @@
       } 
       else {
         if(val && val !== 'Skip' && val !== '-') {
-          // Completed
           right.innerHTML = `<span class="action-time">${val}</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
@@ -765,7 +756,6 @@
              right.appendChild(div);
           }
         } else if(val === 'Skip' || val === '-') {
-          // Skipped (Blue text)
           right.innerHTML = `<span class="action-skip">已略過</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
@@ -776,7 +766,6 @@
              right.appendChild(div);
           }
         } else {
-          // Empty
           if(!isViewer) {
             const div = document.createElement('div'); div.className = 'btn-group';
             div.innerHTML = `
@@ -797,6 +786,89 @@
     document.getElementById('bottomSheet').classList.add('show');
   }
 
+  // ================= LOCATION MANAGEMENT (TAB 1) =================
+  function openLocationSheet(locName, sheetKey) {
+    const title = document.getElementById('sheetTitle');
+    title.textContent = `管理: ${locName}`;
+    const body = document.getElementById('sheetBody');
+    body.innerHTML = '';
+
+    const data = allData[sheetKey];
+    if(!data) return;
+    
+    const cfg = SHEET_CONFIGS.find(s => s.key === sheetKey);
+    const parkingField = cfg.parkingField;
+    const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
+    const carIdx = data.headers.findIndex(h => h.name === '車號');
+    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+
+    // 1. Current Vehicles List
+    const currentVehicles = data.rows.filter(r => (r[parkingIdx] || '').trim() === locName);
+    
+    body.innerHTML += `<div class="action-label" style="margin-bottom:8px;">現有車輛 (${currentVehicles.length})</div>`;
+    
+    if(currentVehicles.length === 0) {
+        body.innerHTML += `<div style="padding:10px; color:#999;">無車輛</div>`;
+    } else {
+        currentVehicles.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'loc-list-item';
+            div.innerHTML = `
+                <div class="loc-list-txt">${r[areaIdx]} - ${r[carIdx]}</div>
+                <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
+            `;
+            body.appendChild(div);
+        });
+    }
+
+    // 2. Add Vehicle Section (Admin/Leader only)
+    const sep = document.createElement('div'); sep.className = 'dynamic-sep';
+    const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '加入車輛';
+    body.appendChild(sep);
+    body.appendChild(head);
+
+    // Candidates: Vehicles with NO parking location
+    const candidates = data.rows.filter(r => {
+        const val = (r[parkingIdx] || '').trim();
+        return !val || val === '-';
+    });
+
+    if(candidates.length > 0) {
+        const sel = document.createElement('select');
+        sel.id = 'selAddLocCar';
+        sel.className = 'sheet-select';
+        sel.style.marginBottom = '12px';
+        sel.innerHTML = `<option value="">請選擇尚未停車的車輛...</option>` + 
+            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} - ${r[carIdx]}</option>`).join('');
+        
+        const btn = document.createElement('button');
+        btn.className = 'btn-solid btn-do';
+        btn.style.width = '100%';
+        btn.textContent = '確定加入';
+        btn.onclick = () => {
+            const carNo = document.getElementById('selAddLocCar').value;
+            if(!carNo) return alert('請選擇車輛');
+            doAssignLoc(sheetKey, carNo, parkingField, locName);
+        };
+
+        body.appendChild(sel);
+        body.appendChild(btn);
+    } else {
+        body.innerHTML += `<div style="color:#999;">無可加入的車輛</div>`;
+    }
+
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('bottomSheet').classList.add('show');
+  }
+
+  async function doAssignLoc(sheetKey, carNo, colName, value) {
+    // Helper to call API with specific sheet context
+    const originalSheet = currentSheetName;
+    currentSheetName = sheetKey; // Switch context for doAction
+    await doAction(carNo, colName, value, true);
+    currentSheetName = originalSheet; // Restore
+  }
+
   // ================= ACTIONS =================
   async function doAction(carNo, colName, value, isUpdate = false) {
     document.getElementById('loading').style.display = 'flex';
@@ -811,17 +883,6 @@
     if(newVal !== null) doAction(carNo, step, newVal, true);
   }
 
-  async function doQuickAssign(sheetKey, colName) {
-    const loc = document.getElementById(`assignLoc_${sheetKey}`).value;
-    const carNo = document.getElementById(`assignCar_${sheetKey}`).value;
-    if(!loc || !carNo) return alert('請選擇位置與車輛');
-    
-    const originalSheet = currentSheetName;
-    currentSheetName = sheetKey; 
-    await doAction(carNo, colName, loc, true);
-    currentSheetName = originalSheet;
-  }
-
   function promptAddColumn() {
     const name = prompt("請輸入新站點名稱:");
     if(name) {
@@ -832,8 +893,6 @@
 
   function switchTab(tab) {
     document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    // Identify active tab by click target or manual logic
-    // Using simple approach: if tab='dash', activate first button
     const btns = document.querySelectorAll('.nav-tab');
     if(tab === 'dash') btns[0].classList.add('active');
     else btns[1].classList.add('active');
@@ -852,6 +911,8 @@
     currentSheetName = sheetKey;
     activeFilter = { step, status };
     document.getElementById('sheetSelector').value = sheetKey;
+    currentDashFilter = sheetKey;
+    renderDashFilters();
     switchTab('op');
   }
 
