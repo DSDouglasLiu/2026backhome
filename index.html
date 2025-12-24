@@ -140,13 +140,12 @@
     .loc-name { font-size: 13px; font-weight: 600; color: var(--color-text-sub); margin-bottom: 4px; }
     .loc-val { font-size: 20px; font-weight: 800; color: var(--color-brand-500); }
 
-    /* Summary Table (Dynamic) */
-    .summary-box { margin-top: 16px; background: #fff; border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--color-border); }
-    .summary-head { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--color-text-main); }
-    .summary-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .summary-table th, .summary-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
-    .summary-table th { color: var(--color-text-sub); font-weight: 600; }
+    /* Summary Table (Dynamic) - Updated Style */
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+    .summary-table th, .summary-table td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: left; }
+    .summary-table th { color: var(--color-text-sub); font-weight: 600; font-size: 13px; }
     .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table td { color: var(--color-text-main); }
 
     /* =========================================
        Operation (Tab 2)
@@ -175,7 +174,6 @@
     .txt-car { font-size: 16px; font-weight: 700; color: var(--color-text-main); }
     .txt-area { font-size: 16px; font-weight: 400; color: var(--color-text-main); }
     .veh-status { font-size: 16px; font-weight: 700; color: var(--color-brand-500); text-align: right; white-space: nowrap; }
-    .status-skip { color: #94a3b8; text-decoration: line-through; }
 
     .filter-bar {
       background: #eff6ff; color: var(--color-brand-600); padding: 8px 12px;
@@ -204,18 +202,24 @@
     
     .action-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
     .action-label { font-size: 15px; font-weight: 600; }
+    
+    /* Time & Status Color */
     .action-time { font-family: monospace; font-size: 16px; font-weight: 700; color: var(--color-brand-600); margin-right: 12px; }
-    .action-skip { font-size: 14px; color: #94a3b8; font-weight: 600; margin-right: 12px; }
+    .action-skip { font-size: 15px; color: var(--color-brand-600); font-weight: 700; margin-right: 12px; } /* Blue for skip text */
+
+    /* New Station Section */
+    .dynamic-sep { border-top: 4px solid #f1f5f9; margin: 16px -24px 16px -24px; }
+    .dynamic-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; color: var(--color-text-main); padding-top: 8px; }
 
     .btn-group { display: flex; gap: 8px; }
-    .btn-action { padding: 8px 16px; border-radius: 20px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-action-sm { padding: 6px 12px; border-radius: 6px; border: none; font-size: 14px; font-weight: 700; color: white; cursor: pointer; }
     
-    /* Buttons */
-    .btn-do { background: var(--color-brand-500); color: white; }
-    .btn-skip { background: transparent; border: 1px solid #cbd5e1; color: #64748b; }
-    .btn-mod { background-color: #22c55e; }
-    .btn-del { background-color: #ef4444; }
+    /* Button Styles - Unified */
+    .btn-action-sm { padding: 6px 12px; border-radius: 6px; border: none; font-size: 14px; font-weight: 700; color: white; cursor: pointer; min-width: 60px; }
+    
+    .btn-do    { background: var(--color-brand-500); } /* Stamp - Blue */
+    .btn-skip  { background: #94a3b8; } /* Skip - Gray Solid */
+    .btn-mod   { background-color: #22c55e; } /* Modify - Green */
+    .btn-del   { background-color: #ef4444; } /* Delete - Red */
     
     .sheet-select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
 
@@ -438,7 +442,7 @@
       // Summary Table (Dynamic Fields)
       const dynamicHeaders = data.headers.filter(h => h.isDynamic);
       if(dynamicHeaders.length > 0) {
-        const summaryBox = createSummaryTable(data, dynamicHeaders);
+        const summaryBox = createSummaryTable(data, dynamicHeaders, cfg);
         if(summaryBox) wrapper.appendChild(summaryBox);
       }
 
@@ -446,7 +450,7 @@
     });
   }
 
-  function createSummaryTable(data, dynamicHeaders) {
+  function createSummaryTable(data, dynamicHeaders, cfg) {
     const rows = [];
     const carIdx = data.headers.findIndex(h => h.name === '車號');
     const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
@@ -464,8 +468,13 @@
     if(rows.length === 0) return null;
 
     const box = document.createElement('div');
-    box.className = 'summary-box';
-    let html = `<div class="summary-head">📊 額外站點紀錄</div><table class="summary-table">
+    // Use Stat Card style to match dashboard
+    box.className = 'stat-card'; 
+    box.style.padding = '12px';
+    
+    // Header style matching Dash Title
+    let html = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}; margin-top:0;">新增站點紀錄</div>
+    <table class="summary-table">
       <tr><th>車號</th><th>區域</th><th>地點</th><th>時間</th></tr>`;
     rows.forEach(r => {
       html += `<tr><td>${r.car}</td><td>${r.area}</td><td>${r.station}</td><td>${r.time}</td></tr>`;
@@ -562,23 +571,19 @@
       card.className = 'veh-card';
       
       let statusText = '準備中';
-      let statusClass = '';
       const parkingStep = SHEET_CONFIGS.find(c=>c.key===currentSheetName).parkingField;
       if(parkingStep) {
         const pIdx = header.findIndex(h => h.name === parkingStep);
         const pVal = (row[pIdx] || '').trim();
         if(pVal) statusText = pVal; 
       }
-
-      // Check if last step is done
-      // Simple logic: check if any recent step is done to show progress
       
       card.innerHTML = `
         <div class="veh-left">
           <div class="txt-car">${row[carIdx] || ''}</div>
           <div class="txt-area">${row[areaIdx] || ''}</div>
         </div>
-        <div class="veh-status ${statusClass}">${statusText}</div>
+        <div class="veh-status">${statusText}</div>
       `;
       card.onclick = () => openBottomSheet(row, header, carIdx);
       container.appendChild(card);
@@ -597,9 +602,19 @@
     // Combine standard steps + dynamic steps
     let allSteps = [...cfg.steps];
     const dynamicHeaders = header.filter(h => h.isDynamic).map(h => h.name);
+    const standardCount = allSteps.length;
     allSteps = allSteps.concat(dynamicHeaders);
 
-    allSteps.forEach(step => {
+    // Iteration
+    allSteps.forEach((step, index) => {
+      // Check if this is the start of Dynamic Section
+      if(index === standardCount) {
+        const sep = document.createElement('div'); sep.className = 'dynamic-sep';
+        const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '新增站點';
+        body.appendChild(sep);
+        body.appendChild(head);
+      }
+
       const hIdx = header.findIndex(h => h.name === step);
       const val = (row[hIdx] || '').trim();
       
@@ -637,7 +652,7 @@
              right.appendChild(div);
           }
         } else if(val === 'Skip' || val === '-') {
-          // Skipped (Gray Text)
+          // Skipped (Blue Text)
           right.innerHTML = `<span class="action-skip">已略過</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
@@ -652,8 +667,8 @@
           if(!isViewer) {
             const div = document.createElement('div'); div.className = 'btn-group';
             div.innerHTML = `
-              <button class="btn-action btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
-              <button class="btn-action btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
+              <button class="btn-action-sm btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
+              <button class="btn-action-sm btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
             `;
             right.appendChild(div);
           } else {
@@ -705,7 +720,6 @@
 
   function switchTab(tab) {
     document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    // Simple logic to set active class based on tab name
     const btns = document.querySelectorAll('.nav-tab');
     if(tab === 'dash') btns[0].classList.add('active');
     else btns[1].classList.add('active');
