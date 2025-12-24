@@ -70,37 +70,43 @@
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       display: grid;
-      /* Left (Refresh) | Center (Time) | Right (Logout) */
-      grid-template-columns: 44px 1fr 44px;
-      align-items: center; 
-      height: 60px;
+      /* Left (Title) | Center (Time) | Right (Controls) */
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: 8px;
     }
 
-    /* Icon Buttons (Mobile style) */
-    .header-btn {
-      background: transparent; border: none; padding: 0;
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-sub); cursor: pointer; transition: 0.2s;
+    .app-title { 
+      font-size: 1.1rem; font-weight: 800; color: var(--c-brand); 
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .header-btn:active { background: #f1f5f9; color: var(--c-brand); }
-    .header-btn svg { width: 24px; height: 24px; }
 
-    .header-btn-left { justify-self: start; }
-    .header-btn-right { justify-self: end; color: var(--text-main); }
-
-    /* Center Time */
     .header-clock { 
       font-family: monospace; /* 等寬字體避免跳動 */
-      font-size: 1.2rem; font-weight: 800; 
-      color: var(--text-main); white-space: nowrap; text-align: center;
+      font-size: 1.1rem; font-weight: 800; 
+      color: var(--text-main); white-space: nowrap; 
+    }
+
+    .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+
+    /* Refresh Buttons */
+    .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
+    .refresh-btn { 
+      border: none; background: transparent; padding: 4px 8px; 
+      font-size: 11px; font-weight: 600; color: var(--text-sub); 
+      border-radius: var(--radius-pill); cursor: pointer; transition: 0.2s;
+    }
+    .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+    /* Logout Button */
+    .btn-logout {
+      background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
 
     /* Level 1 Navigation (Big Pills) */
     .nav-tabs-wrapper {
       grid-column: 1 / -1; /* Span full width */
-      display: flex; gap: 10px; margin-top: 4px; justify-content: center;
-      padding-bottom: 8px;
+      display: flex; gap: 10px; margin-top: 12px; justify-content: center;
     }
     .nav-tab {
       flex: 1; padding: 10px 0; border: none; border-radius: var(--radius-pill);
@@ -114,26 +120,15 @@
        3. Tab 1: Overall Info (看板)
        ========================================= */
     .dash-filters {
-      display: flex; gap: 8px; overflow-x: auto; 
-      padding-bottom: 8px; margin-bottom: 16px; margin-top: 12px; /* Added spacing from nav */
+      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
       -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
-      
-      /* Hide Scrollbar */
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none;  /* IE 10+ */
     }
-    .dash-filters::-webkit-scrollbar { 
-      display: none; /* Chrome/Safari/Webkit */
-    }
-
     .filter-btn {
       padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid transparent;
       font-size: 0.9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
       background: #fff; color: var(--text-sub); border-color: var(--border);
-      transition: 0.2s; flex-shrink: 0;
+      transition: 0.2s;
     }
-    /* Add padding at the end so last item isn't cut off */
-    .dash-filters::after { content:''; padding-right: 8px; }
     
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
@@ -164,13 +159,7 @@
     .loc-container {
       display: flex; gap: 10px; padding-bottom: 8px; 
       overflow-x: auto; scroll-snap-type: x mandatory;
-      
-      /* Hide Scrollbar */
-      scrollbar-width: none; 
-      -ms-overflow-style: none;
     }
-    .loc-container::-webkit-scrollbar { display: none; }
-
     .loc-card {
       /* Mobile: 42% width ensures ~2.2 cards visible (Peeking effect) */
       flex: 0 0 42%; min-width: 120px; 
@@ -215,7 +204,7 @@
       
       /* Grid: [Info Stack (Fixed Width)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
       display: grid;
-      grid-template-columns: 85px minmax(0, 1fr) 44px; 
+      grid-template-columns: 85px 1fr 40px; 
       align-items: center; gap: 10px;
       min-height: 70px; /* Slight taller for stacked text */
     }
@@ -223,8 +212,8 @@
 
     /* Left Column Stack (Vehicle Info) */
     .veh-col-left { display: flex; flex-direction: column; gap: 2px; }
-    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
-    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; }
+    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; }
     
     /* Middle Column Stack (Status) */
     .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
@@ -276,29 +265,18 @@
     
     /* 3-Column Grid: Label | Time | Buttons */
     .action-row { 
-      padding: 14px 0; 
+      display: grid; 
+      /* Label | Time (Center) | Buttons (Right) */
+      grid-template-columns: 130px 1fr auto; 
+      align-items: center; 
+      padding: 12px 0; 
       border-bottom: 1px dashed #eee; 
+      gap: 4px;
     }
-
-    /* Mobile: Stacked Layout to prevent overlap */
-    .action-row-content {
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .action-label { font-size: 1rem; font-weight: 700; color: var(--text-main); }
     
-    .action-data { 
-      display: flex; justify-content: space-between; align-items: center; 
-    }
-
-    /* Desktop Overrides for Action Row: Keep horizontal */
-    @media (min-width: 768px) {
-      .action-row-content {
-        flex-direction: row; align-items: center; justify-content: space-between;
-      }
-      .action-data {
-        justify-content: flex-end; gap: 16px; flex: 1;
-      }
-    }
+    .action-label { font-size: 1rem; font-weight: 700; color: var(--text-main); text-align: left; }
+    .action-mid { text-align: center; } 
+    .action-right { display: flex; justify-content: flex-end; } 
 
     /* Time & Status Colors */
     .action-time { font-family: monospace; font-size: 1rem; font-weight: 700; color: var(--c-brand); }
@@ -353,25 +331,12 @@
 
 <div id="appView" class="hidden">
   <header class="app-header">
-    
-    <button class="header-btn header-btn-left" onclick="manualRefresh()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-        </svg>
-    </button>
-
+    <div class="app-title">2026水陸法會退場</div>
     <div class="header-clock" id="headerClock">--:--:--</div>
-    
-    <button class="header-btn header-btn-right" onclick="logout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
-    </button>
-
+    <div class="header-right">
+      <div class="refresh-ctrl" id="refreshCtrl"></div>
+      <button class="btn-logout" onclick="logout()">登出</button>
+    </div>
     <div class="nav-tabs-wrapper">
         <button class="nav-tab active" onclick="switchTab('dash')">整體情報</button>
         <button class="nav-tab" onclick="switchTab('op')">登錄與修改</button>
@@ -436,9 +401,7 @@
   ];
 
   const STOP_OPTIONS = ['🅿️ 禪堂平台','🅿️ 法心北路','🅿️ 法心南路（西）','🅿️ 法心南路（東）','🅿️ 法大路','🅿️ 雙環路至法大一橋'];
-  
-  // Default for Mobile
-  const MOBILE_REFRESH_MS = 20000; 
+  const REFRESH_OPTIONS = [{ label:'5分', ms:300000 }, { label:'2分', ms:120000 }, { label:'60秒', ms:60000 }, { label:'30秒', ms:30000 }];
 
   let currentUser = null;
   let allData = {};
@@ -446,7 +409,7 @@
   let currentDashFilter = 'ALL';
   let activeFilter = null;
   let refreshTimer = null;
-  let refreshMs = MOBILE_REFRESH_MS; // Default
+  let refreshMs = 60000;
 
   function handleCredentialResponse(response) {
     const payload = JSON.parse(decodeURIComponent(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
@@ -471,8 +434,13 @@
       document.getElementById('btnAdd').classList.remove('hidden');
     }
 
-    refreshMs = MOBILE_REFRESH_MS; 
-
+    const isMobile = window.innerWidth < 768;
+    const isPowerUser = currentUser.permission === 'ADMIN';
+    if(isPowerUser && !isMobile) refreshMs = 30000; 
+    else if(isMobile) refreshMs = 60000; 
+    else refreshMs = 120000; 
+    
+    renderRefreshCtrl();
     renderSheetSelector();
     renderDashFilters(); 
     loadAllData(true);
@@ -805,22 +773,18 @@
       const hIdx = header.findIndex(h => h.name === step);
       const val = (row[hIdx] || '').trim();
       
-      // Use "action-row" with "action-row-content" wrapper for better mobile stacking
       const rowDiv = document.createElement('div');
       rowDiv.className = 'action-row';
-      
-      // Label
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'action-row-content';
-      
-      const label = document.createElement('div');
-      label.className = 'action-label';
-      label.textContent = step;
-      contentDiv.appendChild(label);
+      const left = document.createElement('div');
+      left.className = 'action-label';
+      left.textContent = step;
+      rowDiv.appendChild(left);
 
-      // Data (Time + Buttons)
-      const dataDiv = document.createElement('div');
-      dataDiv.className = 'action-data';
+      const mid = document.createElement('div');
+      mid.className = 'action-mid';
+      
+      const right = document.createElement('div');
+      right.className = 'action-right';
       
       if(step === cfg.parkingField) {
         if(!isViewer) {
@@ -828,31 +792,31 @@
           sel.className = 'sheet-select';
           sel.innerHTML = `<option value="">---- 清除 ----</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
-          dataDiv.appendChild(sel);
+          right.appendChild(sel);
         } else {
-          dataDiv.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
+          mid.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
         }
       } 
       else {
         if(val && val !== 'Skip' && val !== '-') {
-          dataDiv.innerHTML = `<span class="action-time">${val}</span>`;
+          mid.innerHTML = `<span class="action-time">${val}</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
                <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '${val}')">修改</button>
                <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
-             dataDiv.appendChild(div);
+             right.appendChild(div);
           }
         } else if(val === 'Skip' || val === '-') {
-          dataDiv.innerHTML = `<span class="action-skip">已略過</span>`;
+          mid.innerHTML = `<span class="action-skip">已略過</span>`;
           if(!isViewer) {
              const div = document.createElement('div'); div.className = 'btn-group';
              div.innerHTML = `
                <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '')">修改</button>
                <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
              `;
-             dataDiv.appendChild(div);
+             right.appendChild(div);
           }
         } else {
           if(!isViewer) {
@@ -861,12 +825,12 @@
               <button class="btn-solid btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
               <button class="btn-solid btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
             `;
-            dataDiv.appendChild(div);
+            right.appendChild(div);
           }
         }
       }
-      contentDiv.appendChild(dataDiv);
-      rowDiv.appendChild(contentDiv);
+      rowDiv.appendChild(mid);
+      rowDiv.appendChild(right);
       body.appendChild(rowDiv);
     });
 
@@ -1015,17 +979,15 @@
     sel.innerHTML = SHEET_CONFIGS.map(s => `<option value="${s.key}">${s.key}</option>`).join('');
   }
 
-  // Auto Refresh & Manual Trigger
-  function manualRefresh() {
-    loadAllData(true);
-    startTimer(); // Reset timer
+  function renderRefreshCtrl() {
+    const box = document.getElementById('refreshCtrl');
+    box.innerHTML = REFRESH_OPTIONS.map(opt => 
+      `<button class="refresh-btn ${refreshMs===opt.ms?'active':''}" onclick="setRefresh(${opt.ms})">${opt.label}</button>`
+    ).join('');
   }
 
-  function startTimer() { 
-    if(refreshTimer) clearInterval(refreshTimer); 
-    refreshTimer = setInterval(() => loadAllData(false), refreshMs); 
-  }
-  
+  function setRefresh(ms) { refreshMs = ms; renderRefreshCtrl(); startTimer(); }
+  function startTimer() { if(refreshTimer) clearInterval(refreshTimer); refreshTimer = setInterval(() => loadAllData(false), refreshMs); }
   function logout() { localStorage.removeItem('ddcc_user_token'); location.reload(); }
 </script>
 </body>
