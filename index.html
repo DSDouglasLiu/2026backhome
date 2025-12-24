@@ -535,20 +535,20 @@
   }
 
   // ================= UI: OPERATION LIST =================
+  // ================= UI: OPERATION LIST =================
   function renderList() {
     const data = allData[currentSheetName];
-    // 修正點：檢查 data 和 data.headers
     if(!data || !data.headers) return;
 
     const container = document.getElementById('listContainer');
     container.innerHTML = '';
 
-    // 修正點：使用 headers
     const header = data.headers;
     const carIdx = header.findIndex(h => h.name === '車號');
+    // 抓取區域欄位 (相容 '區域車次編號' 或 '編號')
     const areaIdx = header.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
-    const noteIdx = header.findIndex(h => h.name === '備註');
-
+    
+    // 過濾邏輯 (Filter)
     let rows = data.rows;
     if(activeFilter) {
       document.getElementById('filterMsg').classList.remove('hidden');
@@ -573,26 +573,28 @@
       const card = document.createElement('div');
       card.className = 'veh-card';
       
-      let statusText = '準備中';
+      // 判斷顯示狀態
+      let statusText = '點擊操作'; // 預設文字
       const parkingStep = SHEET_CONFIGS.find(c=>c.key===currentSheetName).parkingField;
       
+      // 如果有停車位，優先顯示停車位
       if(parkingStep) {
         const pIdx = header.findIndex(h => h.name === parkingStep);
         const pVal = (row[pIdx] || '').trim();
         if(pVal) statusText = pVal; 
       }
 
+      // 生成 HTML：左側(車號+區域) / 右側(狀態)
       card.innerHTML = `
-        <div class="veh-info">
-          <h3>${row[carIdx]}</h3>
-          <p>${row[areaIdx]} | ${row[noteIdx] || ''}</p>
+        <div class="veh-left">
+          <div class="txt-car">${row[carIdx] || ''}</div>
+          <div class="txt-area">${row[areaIdx] || ''}</div>
         </div>
         <div class="veh-status">
           ${statusText}
-          <span>點擊操作</span>
         </div>
       `;
-      // 修正：傳入 header (複數)
+      
       card.onclick = () => openBottomSheet(row, header, carIdx);
       container.appendChild(card);
     });
