@@ -63,12 +63,18 @@
     .container { padding: 12px; } /* Slightly tighter padding for mobile */
 
     /* =========================================
-       2. Header (Grid Layout for Perfect Centering)
+       2. Header (Sticky & Consolidated)
        ========================================= */
     .app-header {
-      background: var(--bg-surface); padding: 12px 16px;
+      background: var(--bg-surface); 
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding-bottom: 8px; /* Give some space for the bottom row */
+    }
+
+    /* Top Row: Title | Clock | Refresh | Logout */
+    .header-main {
+      padding: 12px 16px 8px 16px;
       display: grid;
       /* Left (Title) | Center (Time) | Right (Controls) */
       grid-template-columns: 1fr auto 1fr;
@@ -81,7 +87,7 @@
     }
 
     .header-clock { 
-      font-family: monospace; /* 等寬字體避免跳動 */
+      font-family: monospace; 
       font-size: 1.1rem; font-weight: 800; 
       color: var(--text-main); white-space: nowrap; 
     }
@@ -103,33 +109,42 @@
       border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
 
-    /* Level 1 Navigation (Big Pills) */
+    /* Level 1 Navigation (Big Pills) - 整體情報 / 登錄與修改 */
     .nav-tabs-wrapper {
-      grid-column: 1 / -1; /* Span full width */
-      display: flex; gap: 10px; margin-top: 12px; justify-content: center;
+      display: flex; gap: 10px; padding: 0 16px 8px 16px; justify-content: center;
     }
     .nav-tab {
-      flex: 1; padding: 10px 0; border: none; border-radius: var(--radius-pill);
-      font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s;
+      flex: 1; padding: 8px 0; border: none; border-radius: var(--radius-pill);
+      font-size: 0.95rem; font-weight: 800; cursor: pointer; transition: 0.2s;
       text-align: center; white-space: nowrap;
       background: #fff; color: var(--c-brand); border: 1px solid var(--c-brand);
     }
     .nav-tab.active { background: var(--c-brand); color: #fff; border-color: var(--c-brand); box-shadow: 0 2px 6px rgba(31, 111, 229, 0.3); }
 
+    /* Level 2 Navigation (Scrollable Pills) - 全部情報 / 各路線按鈕 */
+    .nav-scroll-container {
+      display: flex; gap: 8px; overflow-x: auto; 
+      padding: 4px 16px 8px 16px;
+      -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
+      background: var(--bg-surface);
+      /* Hide Scrollbar visually but keep functionality */
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;  /* IE 10+ */
+    }
+    .nav-scroll-container::-webkit-scrollbar { 
+      display: none; /* Chrome/Safari/Webkit */
+    }
+
+    .filter-btn {
+      padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid transparent;
+      font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer;
+      background: #fff; color: var(--text-sub); border-color: var(--border);
+      transition: 0.2s; flex-shrink: 0; /* Prevent shrinking */
+    }
+    
     /* =========================================
        3. Tab 1: Overall Info (看板)
        ========================================= */
-    .dash-filters {
-      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
-      -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
-    }
-    .filter-btn {
-      padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid transparent;
-      font-size: 0.9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
-      background: #fff; color: var(--text-sub); border-color: var(--border);
-      transition: 0.2s;
-    }
-    
     .dash-section { margin-bottom: 24px; animation: fadeIn 0.3s; }
     .dash-title { 
       font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; 
@@ -186,15 +201,15 @@
     /* =========================================
        4. Tab 2: Operation List (Grid Layout)
        ========================================= */
-    .op-toolbar { 
-      display: flex; gap: 8px; margin-bottom: 16px; align-items: center; 
-      background: #fff; padding: 10px; border-radius: var(--radius-md); box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    .op-action-row {
+        display: flex; justify-content: center; margin-bottom: 12px;
     }
-    .op-select { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-weight: 500; }
     .btn-add { 
-      padding: 8px 12px; background: #fff; border: 1px solid var(--c-brand); 
-      color: var(--c-brand); border-radius: 6px; font-weight: 700; cursor: pointer; white-space: nowrap;
+      padding: 10px 24px; background: #fff; border: 1px solid var(--c-brand); 
+      color: var(--c-brand); border-radius: var(--radius-pill); font-weight: 700; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05); width: 100%; text-align: center;
     }
+    .btn-add:active { background: #f0f9ff; }
 
     /* List Card - 3 Column Grid */
     .veh-card {
@@ -293,10 +308,10 @@
     }
     .btn-solid:active { opacity: 0.8; }
     
-    .btn-do    { background: var(--c-brand); }
-    .btn-skip  { background: var(--c-neutral); } /* Gray */
-    .btn-mod   { background-color: var(--c-success); }
-    .btn-del   { background-color: var(--c-danger); }
+    .btn-do     { background: var(--c-brand); }
+    .btn-skip   { background: var(--c-neutral); } /* Gray */
+    .btn-mod    { background-color: var(--c-success); }
+    .btn-del    { background-color: var(--c-danger); }
     
     .sheet-select { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; font-weight: 500; width: 100%; }
     
@@ -331,29 +346,33 @@
 
 <div id="appView" class="hidden">
   <header class="app-header">
-    <div class="app-title">2026水陸法會退場</div>
-    <div class="header-clock" id="headerClock">--:--:--</div>
-    <div class="header-right">
-      <div class="refresh-ctrl" id="refreshCtrl"></div>
-      <button class="btn-logout" onclick="logout()">登出</button>
+    <div class="header-main">
+        <div class="app-title">2026水陸法會退場</div>
+        <div class="header-clock" id="headerClock">--:--:--</div>
+        <div class="header-right">
+        <div class="refresh-ctrl" id="refreshCtrl"></div>
+        <button class="btn-logout" onclick="logout()">登出</button>
+        </div>
     </div>
+    
     <div class="nav-tabs-wrapper">
         <button class="nav-tab active" onclick="switchTab('dash')">整體情報</button>
         <button class="nav-tab" onclick="switchTab('op')">登錄與修改</button>
     </div>
+
+    <div class="nav-scroll-container" id="universalNav"></div>
   </header>
 
   <div class="container">
     <div id="tabDash" class="dash-section">
-      <div class="dash-filters" id="dashFilters"></div>
       <div id="dashContent"></div>
     </div>
 
     <div id="tabOp" class="hidden">
-      <div class="op-toolbar">
-        <select id="sheetSelector" class="op-select" onchange="onSheetChange()"></select>
+      <div class="op-action-row">
         <button id="btnAdd" class="btn-add hidden" onclick="promptAddColumn()">+ 站點</button>
       </div>
+
       <div id="filterMsg" class="filter-bar hidden">
         <span id="filterText"></span>
         <span class="filter-clear" onclick="clearFilter()">顯示全部</span>
@@ -441,8 +460,8 @@
     else refreshMs = 120000; 
     
     renderRefreshCtrl();
-    renderSheetSelector();
-    renderDashFilters(); 
+    // Initially render Nav for Dash
+    renderNavButtons();
     loadAllData(true);
     startTimer();
     startClock();
@@ -478,26 +497,42 @@
     } catch(e) { return { ok: false, msg: '連線錯誤' }; }
   }
 
-  // ================= UI: DASHBOARD =================
-  function renderDashFilters() {
-    const box = document.getElementById('dashFilters');
+  // ================= UI: UNIVERSAL NAV (BUTTONS) =================
+  function renderNavButtons() {
+    const box = document.getElementById('universalNav');
     box.innerHTML = '';
+    const isDash = !document.getElementById('tabDash').classList.contains('hidden');
     
-    const allBtn = document.createElement('button');
-    const isAllActive = currentDashFilter === 'ALL';
-    allBtn.className = `filter-btn`;
-    if(isAllActive) {
-        allBtn.style.background = '#334155';
-        allBtn.style.color = '#fff';
-        allBtn.style.borderColor = '#334155';
+    // 1. "All Info" Button (Only shown in Dashboard mode)
+    if (isDash) {
+        const allBtn = document.createElement('button');
+        const isAllActive = currentDashFilter === 'ALL';
+        allBtn.className = `filter-btn`;
+        if(isAllActive) {
+            allBtn.style.background = '#334155';
+            allBtn.style.color = '#fff';
+            allBtn.style.borderColor = '#334155';
+        }
+        allBtn.textContent = '全部情報';
+        allBtn.onclick = () => { 
+            currentDashFilter = 'ALL'; 
+            renderNavButtons(); 
+            renderDashboard(); 
+        };
+        box.appendChild(allBtn);
     }
-    allBtn.textContent = '全部情報';
-    allBtn.onclick = () => { currentDashFilter = 'ALL'; renderDashFilters(); renderDashboard(); };
-    box.appendChild(allBtn);
 
+    // 2. Sheet Buttons (Always shown, logic differs slightly)
     SHEET_CONFIGS.forEach(cfg => {
       const btn = document.createElement('button');
-      const isActive = currentDashFilter === cfg.key;
+      // Determine Active State
+      let isActive = false;
+      if (isDash) {
+          isActive = currentDashFilter === cfg.key;
+      } else {
+          isActive = currentSheetName === cfg.key;
+      }
+
       btn.className = `filter-btn`;
       if(isActive) {
         btn.style.backgroundColor = cfg.color;
@@ -508,11 +543,23 @@
         btn.style.borderColor = cfg.color;
       }
       btn.textContent = cfg.key;
-      btn.onclick = () => { currentDashFilter = cfg.key; renderDashFilters(); renderDashboard(); };
+      
+      btn.onclick = () => { 
+        if (isDash) {
+            currentDashFilter = cfg.key;
+            renderDashboard();
+        } else {
+            currentSheetName = cfg.key;
+            activeFilter = null; // Clear filter when switching sheets
+            renderList();
+        }
+        renderNavButtons(); // Re-render to update active styling
+      };
       box.appendChild(btn);
     });
   }
 
+  // ================= UI: DASHBOARD =================
   function renderDashboard() {
     const container = document.getElementById('dashContent');
     container.innerHTML = '';
@@ -955,28 +1002,22 @@
       document.getElementById('tabOp').classList.remove('hidden');
       renderList(); 
     }
+    // Re-render buttons because "All Info" is only for Dash
+    renderNavButtons();
   }
 
   function goToFilter(sheetKey, step, status) {
     currentSheetName = sheetKey;
     activeFilter = { step, status };
-    document.getElementById('sheetSelector').value = sheetKey;
-    currentDashFilter = sheetKey;
-    renderDashFilters();
-    switchTab('op');
+    currentDashFilter = sheetKey; // Sync filter view
+    switchTab('op'); // This will trigger renderList() and renderNavButtons()
   }
 
   function clearFilter() { activeFilter = null; renderList(); }
-  function onSheetChange() { currentSheetName = document.getElementById('sheetSelector').value; activeFilter = null; renderList(); }
   
   function closeSheet() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('bottomSheet').classList.remove('show');
-  }
-
-  function renderSheetSelector() {
-    const sel = document.getElementById('sheetSelector');
-    sel.innerHTML = SHEET_CONFIGS.map(s => `<option value="${s.key}">${s.key}</option>`).join('');
   }
 
   function renderRefreshCtrl() {
