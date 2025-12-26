@@ -211,24 +211,36 @@
     }
     .btn-add:active { background: #f0f9ff; }
 
-    /* List Card - 3 Column Grid */
+    /* List Card - 3 Column Grid (Updated for dynamic width) */
     .veh-card {
       background: var(--bg-surface); border-radius: var(--radius-md);
       padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer; transition: 0.2s; border: 1px solid transparent;
       
-      /* Grid: [Info Stack (Fixed Width)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
+      /* New Grid: [Info Stack (Auto)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
       display: grid;
-      grid-template-columns: 85px 1fr 40px; 
+      grid-template-columns: auto 1fr 40px; 
       align-items: center; gap: 10px;
-      min-height: 70px; /* Slight taller for stacked text */
+      min-height: 70px;
     }
     .veh-card:active { transform: scale(0.98); background-color: #f8fafc; }
 
-    /* Left Column Stack (Vehicle Info) */
-    .veh-col-left { display: flex; flex-direction: column; gap: 2px; }
-    .txt-car { font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; }
-    .txt-area { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); line-height: 1.2; }
+    /* Left Column Stack (Vehicle Info) - Updated for Safety Cap */
+    .veh-col-left { 
+        display: flex; flex-direction: column; gap: 2px; 
+        max-width: 55vw; /* Safety cap for mobile */
+        overflow: hidden;
+    }
+    
+    .txt-car { 
+        font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; 
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .txt-area { 
+        font-size: 13px; /* Reduced size */
+        font-weight: 700; color: var(--text-sub); line-height: 1.2; 
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     
     /* Middle Column Stack (Status) */
     .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
@@ -899,7 +911,10 @@
     const parkingField = cfg.parkingField;
     const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
     const carIdx = data.headers.findIndex(h => h.name === '車號');
-    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    
+    // Ensure we find the specific "Area/Sequence" column, just like in renderList
+    let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
+    if (areaIdx === -1) areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
 
     // 1. Current Vehicles List
     const currentVehicles = data.rows.filter(r => (r[parkingIdx] || '').trim() === locName);
@@ -912,8 +927,9 @@
         currentVehicles.forEach(r => {
             const div = document.createElement('div');
             div.className = 'loc-list-item';
+            // CHANGED: Display Order: CarNo + Area
             div.innerHTML = `
-                <div class="loc-list-txt">${r[areaIdx]} ${r[carIdx]}</div>
+                <div class="loc-list-txt">${r[carIdx]} ${r[areaIdx]}</div>
                 <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
             `;
             body.appendChild(div);
@@ -936,8 +952,9 @@
         sel.id = 'selAddLocCar';
         sel.className = 'sheet-select';
         sel.style.marginBottom = '12px';
+        // CHANGED: Display Order: CarNo + Area
         sel.innerHTML = `<option value="">請選擇車輛</option>` + 
-            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`).join('');
+            candidates.map(r => `<option value="${r[carIdx]}">${r[carIdx]} ${r[areaIdx]}</option>`).join('');
         
         const btn = document.createElement('button');
         btn.className = 'btn-solid btn-do';
