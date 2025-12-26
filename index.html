@@ -198,13 +198,15 @@
     .summary-table tr:last-child td { border-bottom: none; }
     .summary-table td { color: var(--text-main); font-weight: 500; }
 
-    /* Responsive Table Styles (Desktop 4 col / Mobile 3 col) */
-    .col-area-desktop { display: none; } /* Default hidden on mobile */
-    .col-area-mobile { display: block; font-size: 0.85rem; color: var(--text-sub); margin-top: 4px; } /* Default shown on mobile */
-    
+    /* Responsive Table Logic */
+    /* Mobile: Hide Area Column, Show Mobile Area Tag inside Car Column */
+    .col-desktop-area { display: none; } 
+    .mobile-area-tag { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 2px; font-weight: 600; }
+
+    /* Desktop: Show Area Column, Hide Mobile Area Tag */
     @media (min-width: 768px) {
-        .col-area-desktop { display: table-cell; }
-        .col-area-mobile { display: none; }
+        .col-desktop-area { display: table-cell; }
+        .mobile-area-tag { display: none; }
     }
 
     /* =========================================
@@ -523,7 +525,6 @@
     box.innerHTML = '';
     const isDash = !document.getElementById('tabDash').classList.contains('hidden');
     
-    // 1. "All Info" Button (Only shown in Dashboard mode)
     if (isDash) {
         const allBtn = document.createElement('button');
         const isAllActive = currentDashFilter === 'ALL';
@@ -542,10 +543,8 @@
         box.appendChild(allBtn);
     }
 
-    // 2. Sheet Buttons (Always shown, logic differs slightly)
     SHEET_CONFIGS.forEach(cfg => {
       const btn = document.createElement('button');
-      // Determine Active State
       let isActive = false;
       if (isDash) {
           isActive = currentDashFilter === cfg.key;
@@ -570,10 +569,10 @@
             renderDashboard();
         } else {
             currentSheetName = cfg.key;
-            activeFilter = null; // Clear filter when switching sheets
+            activeFilter = null; 
             renderList();
         }
-        renderNavButtons(); // Re-render to update active styling
+        renderNavButtons(); 
       };
       box.appendChild(btn);
     });
@@ -603,7 +602,6 @@
 
       inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
 
-      // Location Stats (Clickable)
       if(parkingStep) {
         const locContainer = document.createElement('div');
         locContainer.className = 'loc-container';
@@ -618,7 +616,6 @@
           const card = document.createElement('div');
           card.className = 'loc-card';
           card.innerHTML = `<div class="loc-name">${loc}</div><div class="loc-val">${counts[loc]}</div>`;
-          // Click to Manage Location
           if(currentUser.permission === 'ADMIN' || currentUser.permission === 'LEADER') {
              card.onclick = () => openLocationSheet(loc, cfg.key);
           }
@@ -667,23 +664,23 @@
     box.className = 'stat-card'; 
     box.style.padding = '12px';
     
-    // Updated Table Logic for Responsive Layout (4 columns on Desktop, 3 on Mobile)
+    // UPDATED: Table Logic for Area -> Car order, and Responsive Mobile Layout
     let html = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}; margin-top:0;">新增站點紀錄</div>
     <table class="summary-table">
       <tr>
+        <th class="col-desktop-area">區域</th>
         <th>車號</th>
-        <th class="col-area-desktop">區域</th>
         <th>地點</th>
         <th>時間</th>
       </tr>`;
       
     rows.forEach(r => {
       html += `<tr>
+          <td class="col-desktop-area">${r.area}</td>
           <td>
+             <div class="mobile-area-tag">${r.area}</div>
              <div class="txt-main">${r.car}</div>
-             <div class="col-area-mobile">${r.area}</div>
           </td>
-          <td class="col-area-desktop">${r.area}</td>
           <td>${r.station}</td>
           <td>${r.time}</td>
       </tr>`;
@@ -731,7 +728,6 @@
     if (areaIdx === -1) areaIdx = header.findIndex(h => h.name.includes('區域'));
 
     let rows = data.rows;
-    // Apply Filter
     if(activeFilter) {
       document.getElementById('filterMsg').classList.remove('hidden');
       document.getElementById('filterText').textContent = `篩選: ${activeFilter.step} (${activeFilter.status === 'done' ? '完成' : '未完成'})`;
@@ -745,10 +741,8 @@
       document.getElementById('filterMsg').classList.add('hidden');
     }
 
-    // Prepare rows
     const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
     const renderItems = rows.map((row, idx) => {
-        // 1. Standard Progress & Latest Status
         let stdCompletedCount = 0;
         let latestStdTime = ''; 
         let displayStatus = null;
@@ -771,7 +765,6 @@
 
         if(!displayStatus) displayStatus = `<div class="status-row status-pending">尚未開始</div>`;
 
-        // 2. Dynamic Stations (Time > Latest Std Time)
         const dynamicHeaders = header.filter(h => h.isDynamic);
         let dynamicUpdates = [];
         
@@ -786,7 +779,6 @@
         });
         dynamicUpdates.sort((a, b) => a.time.localeCompare(b.time));
 
-        // 3. Construct Final HTML (Vertical Stack)
         let finalHtml = displayStatus;
         if(dynamicUpdates.length > 0) {
             finalHtml += `<div class="status-sep"></div>`;
@@ -799,7 +791,6 @@
         return { row, stdCompletedCount, finalHtml, isAllDone, originalIdx: idx };
     });
 
-    // Sort: Standard Progress (Low -> High), then Index
     renderItems.sort((a, b) => {
         if (a.stdCompletedCount !== b.stdCompletedCount) return a.stdCompletedCount - b.stdCompletedCount;
         return a.originalIdx - b.originalIdx;
@@ -873,7 +864,7 @@
         if(!isViewer) {
           const sel = document.createElement('select');
           sel.className = 'sheet-select';
-          // UPDATE: Clear option changed to dashes
+          // UPDATED: "Clear" text changed to dashed line
           sel.innerHTML = `<option value="">------------</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
           right.appendChild(sel);
@@ -949,9 +940,9 @@
         currentVehicles.forEach(r => {
             const div = document.createElement('div');
             div.className = 'loc-list-item';
-            // UPDATE: Show Car First, then Area (Unified Order)
+            // UPDATED: Show Area First, then Car
             div.innerHTML = `
-                <div class="loc-list-txt">${r[carIdx]} ${r[areaIdx]}</div>
+                <div class="loc-list-txt">${r[areaIdx]} ${r[carIdx]}</div>
                 <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
             `;
             body.appendChild(div);
@@ -974,9 +965,9 @@
         sel.id = 'selAddLocCar';
         sel.className = 'sheet-select';
         sel.style.marginBottom = '12px';
-        // UPDATE: Show Car First, then Area in options (Unified Order)
+        // UPDATED: Show Area First, then Car in options
         sel.innerHTML = `<option value="">請選擇車輛</option>` + 
-            candidates.map(r => `<option value="${r[carIdx]}">${r[carIdx]} ${r[areaIdx]}</option>`).join('');
+            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`).join('');
         
         const btn = document.createElement('button');
         btn.className = 'btn-solid btn-do';
@@ -1041,15 +1032,14 @@
       document.getElementById('tabOp').classList.remove('hidden');
       renderList(); 
     }
-    // Re-render buttons because "All Info" is only for Dash
     renderNavButtons();
   }
 
   function goToFilter(sheetKey, step, status) {
     currentSheetName = sheetKey;
     activeFilter = { step, status };
-    currentDashFilter = sheetKey; // Sync filter view
-    switchTab('op'); // This will trigger renderList() and renderNavButtons()
+    currentDashFilter = sheetKey; 
+    switchTab('op'); 
   }
 
   function clearFilter() { activeFilter = null; renderList(); }
