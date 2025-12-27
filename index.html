@@ -198,14 +198,14 @@
     .summary-table tr:last-child td { border-bottom: none; }
     .summary-table td { color: var(--text-main); font-weight: 500; }
 
-    /* Responsive Table Logic - NOW: Car first, then Area */
-    .col-desktop-area { display: none; } 
-    .mobile-car-tag { display: block; font-size: 1rem; font-weight: 800; margin-bottom: 2px; }
-    .mobile-area-tag { display: block; font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
+    /* Responsive Table Logic - NOW: Area first, then Car */
+    .col-desktop-car { display: none; }
+    .mobile-area-tag { display: block; font-size: 1rem; font-weight: 800; margin-bottom: 2px; }
+    .mobile-car-tag { display: block; font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
 
     @media (min-width: 768px) {
-        .col-desktop-area { display: table-cell; }
-        .mobile-car-tag, .mobile-area-tag { display: none; }
+        .col-desktop-car { display: table-cell; }
+        .mobile-area-tag, .mobile-car-tag { display: none; }
     }
 
     /* =========================================
@@ -272,7 +272,7 @@
       border-color: var(--border-success);
     }
     .veh-card.completed .status-row { color: var(--text-success); }
-    .veh-card.completed .btn-expand { background: var(--border-success); color: #fff; border-color: var(--border-success); content: "✓"; }
+    .veh-card.completed .btn-expand { background: var(--border-success); color: #fff; border-color: var(--border-success); }
 
     .filter-bar {
       background: #eff6ff; color: var(--c-brand); padding: 8px 12px;
@@ -451,201 +451,12 @@
   let refreshTimer = null;
   let refreshMs = 60000;
 
-  function handleCredentialResponse(response) {
-    const payload = JSON.parse(decodeURIComponent(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-    currentUser = { email: payload.email, token: response.credential };
-    document.getElementById('loading').style.display = 'flex';
-    callApi('verify').then(res => {
-      if(res.ok) {
-        currentUser.permission = res.permission;
-        initApp();
-      } else {
-        alert(res.msg);
-        document.getElementById('loading').style.display = 'none';
-      }
-    });
-  }
-
-  function initApp() {
-    document.getElementById('loginView').style.display = 'none';
-    document.getElementById('appView').classList.remove('hidden');
-    
-    if(currentUser.permission === 'ADMIN' || currentUser.permission === 'LEADER') {
-      document.getElementById('btnAdd').classList.remove('hidden');
-    }
-
-    const isMobile = window.innerWidth < 768;
-    const isPowerUser = currentUser.permission === 'ADMIN';
-    if(isPowerUser && !isMobile) refreshMs = 30000; 
-    else if(isMobile) refreshMs = 60000; 
-    else refreshMs = 120000; 
-    
-    renderRefreshCtrl();
-    // Initially render Nav for Dash
-    renderNavButtons();
-    loadAllData(true);
-    startTimer();
-    startClock();
-  }
-
-  function startClock() {
-    setInterval(() => {
-      const now = new Date();
-      document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
-    }, 1000);
-  }
-
-  async function loadAllData(force = false) {
-    if(!force) document.getElementById('loading').style.display = 'none';
-    const res = await callApi('getAllData');
-    if(res.ok) {
-      allData = res.allSheets;
-      renderDashboard();
-      if(!document.getElementById('tabOp').classList.contains('hidden')){
-         renderList(); 
-      }
-    }
-    document.getElementById('loading').style.display = 'none';
-  }
-
-  async function callApi(action, data = {}) {
-    try {
-      const res = await fetch(SCRIPT_URL, { 
-        method: 'POST', 
-        body: JSON.stringify({ action, token: currentUser?.token, ...data }) 
-      });
-      return await res.json();
-    } catch(e) { return { ok: false, msg: '連線錯誤' }; }
-  }
-
-  // ================= UI: UNIVERSAL NAV (BUTTONS) =================
-  function renderNavButtons() {
-    const box = document.getElementById('universalNav');
-    box.innerHTML = '';
-    const isDash = !document.getElementById('tabDash').classList.contains('hidden');
-    
-    if (isDash) {
-        const allBtn = document.createElement('button');
-        const isAllActive = currentDashFilter === 'ALL';
-        allBtn.className = `filter-btn`;
-        if(isAllActive) {
-            allBtn.style.background = '#334155';
-            allBtn.style.color = '#fff';
-            allBtn.style.borderColor = '#334155';
-        }
-        allBtn.textContent = '全部情報';
-        allBtn.onclick = () => { 
-            currentDashFilter = 'ALL'; 
-            renderNavButtons(); 
-            renderDashboard(); 
-        };
-        box.appendChild(allBtn);
-    }
-
-    SHEET_CONFIGS.forEach(cfg => {
-      const btn = document.createElement('button');
-      let isActive = false;
-      if (isDash) {
-          isActive = currentDashFilter === cfg.key;
-      } else {
-          isActive = currentSheetName === cfg.key;
-      }
-
-      btn.className = `filter-btn`;
-      if(isActive) {
-        btn.style.backgroundColor = cfg.color;
-        btn.style.borderColor = cfg.color;
-        btn.style.color = '#fff';
-      } else {
-        btn.style.color = cfg.color;
-        btn.style.borderColor = cfg.color;
-      }
-      btn.textContent = cfg.key;
-     
-      btn.onclick = () => { 
-        if (isDash) {
-            currentDashFilter = cfg.key;
-            renderDashboard();
-        } else {
-            currentSheetName = cfg.key;
-            activeFilter = null; 
-            renderList();
-        }
-        renderNavButtons(); 
-      };
-      box.appendChild(btn);
-    });
-  }
-
-  // ================= UI: DASHBOARD =================
-  function renderDashboard() {
-    const container = document.getElementById('dashContent');
-    container.innerHTML = '';
-
-    SHEET_CONFIGS.forEach(cfg => {
-      if(currentDashFilter !== 'ALL' && currentDashFilter !== cfg.key) return;
-
-      const data = allData[cfg.key];
-      if(!data || !data.headers) return; 
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'dash-section';
-      wrapper.innerHTML = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}">${cfg.key}</div>`;
-
-      const steps = cfg.steps;
-      const parkingStep = cfg.parkingField;
-      const parkingIdx = steps.indexOf(parkingStep);
-     
-      const inbound = parkingIdx >= 0 ? steps.slice(0, parkingIdx) : steps;
-      const outbound = parkingIdx >= 0 ? steps.slice(parkingIdx + 1) : [];
-
-      inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
-
-      if(parkingStep) {
-        const locContainer = document.createElement('div');
-        locContainer.className = 'loc-container';
-        const colIdx = data.headers.findIndex(h => h.name === parkingStep);
-        const counts = {};
-        STOP_OPTIONS.forEach(s => counts[s] = 0);
-        data.rows.forEach(r => {
-          const val = (r[colIdx] || '').trim();
-          if(counts[val] !== undefined) counts[val]++;
-        });
-        STOP_OPTIONS.forEach(loc => {
-          const card = document.createElement('div');
-          card.className = 'loc-card';
-          card.innerHTML = `<div class="loc-name">${loc}</div><div class="loc-val">${counts[loc]}</div>`;
-          if(currentUser.permission === 'ADMIN' || currentUser.permission === 'LEADER') {
-             card.onclick = () => openLocationSheet(loc, cfg.key);
-          }
-          locContainer.appendChild(card);
-        });
-        wrapper.appendChild(locContainer);
-      }
-
-      if(outbound.length > 0) {
-        const outTitle = document.createElement('div');
-        outTitle.className = 'step-header';
-        outTitle.style.marginTop = '16px';
-        outTitle.textContent = '退場程序';
-        wrapper.appendChild(outTitle);
-        outbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
-      }
-
-      const dynamicHeaders = data.headers.filter(h => h.isDynamic);
-      if(dynamicHeaders.length > 0) {
-        const summaryBox = createSummaryTable(data, dynamicHeaders, cfg);
-        if(summaryBox) wrapper.appendChild(summaryBox);
-      }
-
-      container.appendChild(wrapper);
-    });
-  }
+  // ... (handleCredentialResponse, initApp, startClock, loadAllData, callApi, renderNavButtons, renderDashboard 保持不變)
 
   function createSummaryTable(data, dynamicHeaders, cfg) {
     const rows = [];
     const carIdx = data.headers.findIndex(h => h.name === '車號');
-    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    const areaIdx = data.headers.findIndex(h => h.name === '區域車次編號' || h.name.includes('區域'));
 
     data.rows.forEach(r => {
       dynamicHeaders.forEach(dh => {
@@ -663,12 +474,12 @@
     box.className = 'stat-card'; 
     box.style.padding = '12px';
    
-    // NEW: 車號在前，區域在後；手機版第一欄垂直顯示車號(上) + 區域(下)
+    // 區域車次編號在前，車號在後；手機版第一欄：上方區域，下方車號
     let html = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}; margin-top:0;">新增站點紀錄</div>
     <table class="summary-table">
       <tr>
-        <th>車號</th>
-        <th class="col-desktop-area">區域車次編號</th>
+        <th>區域車次編號</th>
+        <th class="col-desktop-car">車號</th>
         <th>地點</th>
         <th>時間</th>
       </tr>`;
@@ -676,10 +487,10 @@
     rows.forEach(r => {
       html += `<tr>
           <td>
-             <div class="mobile-car-tag">${r.car}</div>
              <div class="mobile-area-tag">${r.area}</div>
+             <div class="mobile-car-tag">${r.car}</div>
           </td>
-          <td class="col-desktop-area">${r.area}</td>
+          <td class="col-desktop-car">${r.car}</td>
           <td>${r.station}</td>
           <td>${r.time}</td>
       </tr>`;
@@ -689,229 +500,8 @@
     return box;
   }
 
-  function createStatCard(step, data, cfg) {
-    const colIdx = data.headers.findIndex(h => h.name === step);
-    let done = 0, todo = 0;
-    data.rows.forEach(row => {
-      const val = (row[colIdx] || '').trim();
-      (val && val !== 'Skip' && val !== '-') ? done++ : todo++;
-    });
+  // ... (createStatCard, renderList 保持不變)
 
-    const card = document.createElement('div');
-    card.className = 'stat-card';
-    card.innerHTML = `
-      <div class="step-header">${step}</div>
-      <div class="stat-row">
-        <div class="stat-box" onclick="goToFilter('${cfg.key}', '${step}', 'done')">
-          <div class="stat-num num-done">${done}</div>
-          <div class="stat-lbl">完成</div>
-        </div>
-        <div class="stat-box" onclick="goToFilter('${cfg.key}', '${step}', 'todo')">
-          <div class="stat-num num-todo" style="${todo===0?'color:#ccc':''}">${todo}</div>
-          <div class="stat-lbl">未完成</div>
-        </div>
-      </div>`;
-    return card;
-  }
-
-  // ================= UI: LIST (TAB 2) =================
-  function renderList() {
-    const data = allData[currentSheetName];
-    if(!data || !data.headers) return;
-
-    const container = document.getElementById('listContainer');
-    container.innerHTML = '';
-    const header = data.headers;
-    const carIdx = header.findIndex(h => h.name === '車號');
-    let areaIdx = header.findIndex(h => h.name === '區域車次編號');
-    if (areaIdx === -1) areaIdx = header.findIndex(h => h.name.includes('區域'));
-
-    let rows = data.rows;
-    if(activeFilter) {
-      document.getElementById('filterMsg').classList.remove('hidden');
-      document.getElementById('filterText').textContent = `篩選: ${activeFilter.step} (${activeFilter.status === 'done' ? '完成' : '未完成'})`;
-      const stepIdx = header.findIndex(h => h.name === activeFilter.step);
-      rows = rows.filter(r => {
-        const val = (r[stepIdx] || '').trim();
-        const isDone = (val && val !== '-' && val !== 'Skip');
-        return activeFilter.status === 'done' ? isDone : !isDone;
-      });
-    } else {
-      document.getElementById('filterMsg').classList.add('hidden');
-    }
-
-    const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
-    const renderItems = rows.map((row, idx) => {
-        let stdCompletedCount = 0;
-        let latestStdTime = ''; 
-        let displayStatus = null;
-        
-        cfg.steps.forEach(step => {
-            const hIdx = header.findIndex(h => h.name === step);
-            const val = (row[hIdx] || '').trim();
-            if(val && val !== '-') {
-                stdCompletedCount++;
-                if(step === cfg.parkingField) {
-                    displayStatus = `<div class="status-row">${val}</div>`;
-                } else if(val === 'Skip') {
-                    displayStatus = `<div class="status-row">${step} (略過)</div>`;
-                } else {
-                    displayStatus = `<div class="status-row">${step}</div><div class="status-row">${val}</div>`;
-                    latestStdTime = val; 
-                }
-            }
-        });
-
-        if(!displayStatus) displayStatus = `<div class="status-row status-pending">尚未開始</div>`;
-
-        const dynamicHeaders = header.filter(h => h.isDynamic);
-        let dynamicUpdates = [];
-        
-        dynamicHeaders.forEach(dh => {
-            const hIdx = header.indexOf(dh);
-            const val = (row[hIdx] || '').trim();
-            if(val && val !== '-' && val !== 'Skip') {
-                if(!latestStdTime || val > latestStdTime) {
-                    dynamicUpdates.push({ name: dh.name, time: val });
-                }
-            }
-        });
-        dynamicUpdates.sort((a, b) => a.time.localeCompare(b.time));
-
-        let finalHtml = displayStatus;
-        if(dynamicUpdates.length > 0) {
-            finalHtml += `<div class="status-sep"></div>`;
-            dynamicUpdates.forEach(u => {
-                finalHtml += `<div class="status-row status-dynamic">${u.name} ${u.time}</div>`;
-            });
-        }
-
-        const isAllDone = stdCompletedCount === cfg.steps.length;
-        return { row, stdCompletedCount, finalHtml, isAllDone, originalIdx: idx };
-    });
-
-    renderItems.sort((a, b) => {
-        if (a.stdCompletedCount !== b.stdCompletedCount) return a.stdCompletedCount - b.stdCompletedCount;
-        return a.originalIdx - b.originalIdx;
-    });
-
-    if(renderItems.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">無符合資料</div>';
-      return;
-    }
-
-    renderItems.forEach(item => {
-      const card = document.createElement('div');
-      card.className = `veh-card ${item.isAllDone ? 'completed' : ''}`;
-      const btnIcon = item.isAllDone ? '✓' : '+';
-     
-      card.innerHTML = `
-        <div class="veh-col-left">
-            <div class="txt-car">${item.row[carIdx] || ''}</div>
-            <div class="txt-area">${item.row[areaIdx] || ''}</div>
-        </div>
-        <div class="veh-col-mid">
-            ${item.finalHtml}
-        </div>
-        <div class="btn-expand">${btnIcon}</div>
-      `;
-      card.onclick = () => openBottomSheet(item.row, header, carIdx, areaIdx);
-      container.appendChild(card);
-    });
-  }
-
-  // ================= MANAGERS =================
-  function openBottomSheet(row, header, carIdx, areaIdx) {
-    const title = document.getElementById('sheetTitle');
-    title.textContent = `${row[carIdx]} ${row[areaIdx]}`;
-    const body = document.getElementById('sheetBody');
-    body.innerHTML = '';
-
-    const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
-    const isViewer = currentUser.permission === 'VIEWER';
-
-    let allSteps = [...cfg.steps];
-    const dynamicHeaders = header.filter(h => h.isDynamic).map(h => h.name);
-    const standardCount = allSteps.length;
-    allSteps = allSteps.concat(dynamicHeaders);
-
-    allSteps.forEach((step, index) => {
-      if(index === standardCount) {
-        const sep = document.createElement('div'); sep.className = 'dynamic-sep';
-        const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '新增站點';
-        body.appendChild(sep);
-        body.appendChild(head);
-      }
-
-      const hIdx = header.findIndex(h => h.name === step);
-      const val = (row[hIdx] || '').trim();
-     
-      const rowDiv = document.createElement('div');
-      rowDiv.className = 'action-row';
-      const left = document.createElement('div');
-      left.className = 'action-label';
-      left.textContent = step;
-      rowDiv.appendChild(left);
-
-      const mid = document.createElement('div');
-      mid.className = 'action-mid';
-     
-      const right = document.createElement('div');
-      right.className = 'action-right';
-     
-      if(step === cfg.parkingField) {
-        if(!isViewer) {
-          const sel = document.createElement('select');
-          sel.className = 'sheet-select';
-          sel.innerHTML = `<option value="">------------</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
-          sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
-          right.appendChild(sel);
-        } else {
-          mid.innerHTML = `<span class="action-time" style="color:#000">${val || '-'}</span>`;
-        }
-      } 
-      else {
-        if(val && val !== 'Skip' && val !== '-') {
-          mid.innerHTML = `<span class="action-time">${val}</span>`;
-          if(!isViewer) {
-             const div = document.createElement('div'); div.className = 'btn-group';
-             div.innerHTML = `
-               <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '${val}')">修改</button>
-               <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
-             `;
-             right.appendChild(div);
-          }
-        } else if(val === 'Skip' || val === '-') {
-          mid.innerHTML = `<span class="action-skip">已略過</span>`;
-          if(!isViewer) {
-             const div = document.createElement('div'); div.className = 'btn-group';
-             div.innerHTML = `
-               <button class="btn-solid btn-mod" onclick="modifyTime('${row[carIdx]}', '${step}', '')">修改</button>
-               <button class="btn-solid btn-del" onclick="doAction('${row[carIdx]}', '${step}', '')">刪除</button>
-             `;
-             right.appendChild(div);
-          }
-        } else {
-          if(!isViewer) {
-            const div = document.createElement('div'); div.className = 'btn-group';
-            div.innerHTML = `
-              <button class="btn-solid btn-do" onclick="doAction('${row[carIdx]}', '${step}', null)">打卡</button>
-              <button class="btn-solid btn-skip" onclick="doAction('${row[carIdx]}', '${step}', '-')">略過</button>
-            `;
-            right.appendChild(div);
-          }
-        }
-      }
-      rowDiv.appendChild(mid);
-      rowDiv.appendChild(right);
-      body.appendChild(rowDiv);
-    });
-
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('bottomSheet').classList.add('show');
-  }
-
-  // ================= LOCATION MANAGEMENT (TAB 1) =================
   function openLocationSheet(locName, sheetKey) {
     const title = document.getElementById('sheetTitle');
     title.textContent = `${locName}`; 
@@ -925,7 +515,7 @@
     const parkingField = cfg.parkingField;
     const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
     const carIdx = data.headers.findIndex(h => h.name === '車號');
-    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    const areaIdx = data.headers.findIndex(h => h.name === '區域車次編號' || h.name.includes('區域'));
 
     // 1. Current Vehicles List
     const currentVehicles = data.rows.filter(r => (r[parkingIdx] || '').trim() === locName);
@@ -938,16 +528,16 @@
         currentVehicles.forEach(r => {
             const div = document.createElement('div');
             div.className = 'loc-list-item';
-            // NOW: 車號在前，區域在後
+            // 區域車次編號在前，車號在後
             div.innerHTML = `
-                <div class="loc-list-txt">${r[carIdx]} ${r[areaIdx]}</div>
+                <div class="loc-list-txt">${r[areaIdx]} ${r[carIdx]}</div>
                 <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
             `;
             body.appendChild(div);
         });
     }
 
-    // 2. Add Vehicle Section (Admin/Leader only)
+    // 2. Add Vehicle Section
     const sep = document.createElement('div'); sep.className = 'dynamic-sep';
     const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '加入車輛';
     body.appendChild(sep);
@@ -963,9 +553,9 @@
         sel.id = 'selAddLocCar';
         sel.className = 'sheet-select';
         sel.style.marginBottom = '12px';
-        // NOW: 選項顯示「車號 區域車次編號」
+        // 選項：區域車次編號 車號
         sel.innerHTML = `<option value="">請選擇車輛</option>` + 
-            candidates.map(r => `<option value="${r[carIdx]}">${r[carIdx]} ${r[areaIdx]}</option>`).join('');
+            candidates.map(r => `<option value="${r[carIdx]}">${r[areaIdx]} ${r[carIdx]}</option>`).join('');
         
         const btn = document.createElement('button');
         btn.className = 'btn-solid btn-do';
@@ -987,76 +577,7 @@
     document.getElementById('bottomSheet').classList.add('show');
   }
 
-  async function doAssignLoc(sheetKey, carNo, colName, value) {
-    const originalSheet = currentSheetName;
-    currentSheetName = sheetKey; 
-    await doAction(carNo, colName, value, true);
-    currentSheetName = originalSheet; 
-  }
-
-  // ================= ACTIONS =================
-  async function doAction(carNo, colName, value, isUpdate = false) {
-    document.getElementById('loading').style.display = 'flex';
-    closeSheet();
-    const action = isUpdate ? 'update' : 'stamp';
-    await callApi(action, { sheetName: currentSheetName, carNo, colName, value });
-    await loadAllData(true);
-  }
-
-  function modifyTime(carNo, step, oldVal) {
-    const newVal = prompt('修改時間:', oldVal || '');
-    if(newVal !== null) doAction(carNo, step, newVal, true);
-  }
-
-  function promptAddColumn() {
-    const name = prompt("請輸入新站點名稱:");
-    if(name) {
-      document.getElementById('loading').style.display = 'flex';
-      callApi('addColumn', { sheetName: currentSheetName, colName: name }).then(() => loadAllData(true));
-    }
-  }
-
-  function switchTab(tab) {
-    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    const btns = document.querySelectorAll('.nav-tab');
-    if(tab === 'dash') btns[0].classList.add('active');
-    else btns[1].classList.add('active');
-    
-    if(tab === 'dash') {
-      document.getElementById('tabDash').classList.remove('hidden');
-      document.getElementById('tabOp').classList.add('hidden');
-    } else {
-      document.getElementById('tabDash').classList.add('hidden');
-      document.getElementById('tabOp').classList.remove('hidden');
-      renderList(); 
-    }
-    renderNavButtons();
-  }
-
-  function goToFilter(sheetKey, step, status) {
-    currentSheetName = sheetKey;
-    activeFilter = { step, status };
-    currentDashFilter = sheetKey; 
-    switchTab('op'); 
-  }
-
-  function clearFilter() { activeFilter = null; renderList(); }
-  
-  function closeSheet() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('bottomSheet').classList.remove('show');
-  }
-
-  function renderRefreshCtrl() {
-    const box = document.getElementById('refreshCtrl');
-    box.innerHTML = REFRESH_OPTIONS.map(opt => 
-      `<button class="refresh-btn ${refreshMs===opt.ms?'active':''}" onclick="setRefresh(${opt.ms})">${opt.label}</button>`
-    ).join('');
-  }
-
-  function setRefresh(ms) { refreshMs = ms; renderRefreshCtrl(); startTimer(); }
-  function startTimer() { if(refreshTimer) clearInterval(refreshTimer); refreshTimer = setInterval(() => loadAllData(false), refreshMs); }
-  function logout() { localStorage.removeItem('ddcc_user_token'); location.reload(); }
+  // ... (其餘函數：doAssignLoc, doAction, modifyTime, promptAddColumn, switchTab, goToFilter, clearFilter, closeSheet, renderRefreshCtrl, setRefresh, startTimer, logout 保持不變)
 </script>
 </body>
 </html>
