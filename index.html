@@ -197,6 +197,8 @@
     .summary-table th { color: var(--text-sub); font-weight: 600; font-size: 0.85rem; }
     .summary-table tr:last-child td { border-bottom: none; }
     .summary-table td { color: var(--text-main); font-weight: 500; }
+    .summary-time { font-family: monospace; color: var(--text-sub); }
+    .summary-loc { color: var(--c-brand); font-weight: 700; }
 
     /* =========================================
        4. Tab 2: Operation List (Grid Layout)
@@ -211,34 +213,37 @@
     }
     .btn-add:active { background: #f0f9ff; }
 
-    /* List Card - 3 Column Grid (Updated for dynamic width) */
+    /* List Card - UPDATED Grid Layout */
     .veh-card {
       background: var(--bg-surface); border-radius: var(--radius-md);
       padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer; transition: 0.2s; border: 1px solid transparent;
       
-      /* New Grid: [Info Stack (Auto)] | [Status Stack (Flexible)] | [Btn (Fixed)] */
+      /* Grid: [Info Stack (Fixed 35%)] | [Status Stack (Flexible)] | [Btn (Fixed 40px)] */
       display: grid;
-      grid-template-columns: auto 1fr 40px; 
+      grid-template-columns: 35% 1fr 40px; 
       align-items: center; gap: 10px;
       min-height: 70px;
     }
     .veh-card:active { transform: scale(0.98); background-color: #f8fafc; }
 
-    /* Left Column Stack (Vehicle Info) - Updated for Safety Cap */
+    /* Left Column Stack (Vehicle Info) */
     .veh-col-left { 
-        display: flex; flex-direction: column; gap: 2px; 
-        max-width: 55vw; /* Safety cap for mobile */
+        display: flex; flex-direction: column; gap: 4px; 
         overflow: hidden;
+        border-right: 1px solid transparent; /* Visual alignment aid implicitly */
     }
     
+    /* Typography Updated: Both are Bold & Larger */
     .txt-car { 
         font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; 
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .txt-area { 
-        font-size: 13px; /* Reduced size */
-        font-weight: 700; color: var(--text-sub); line-height: 1.2; 
+        font-size: 1.1rem; /* Increased size */
+        font-weight: 800; /* Bold */
+        color: #000; /* Changed from sub to main color */
+        line-height: 1.2; 
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     
@@ -595,17 +600,35 @@
 
       inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
 
-      // Location Stats (Clickable)
+      // Location Stats & Detailed Parking List
       if(parkingStep) {
+        // 1. Stats Grid
         const locContainer = document.createElement('div');
         locContainer.className = 'loc-container';
         const colIdx = data.headers.findIndex(h => h.name === parkingStep);
         const counts = {};
         STOP_OPTIONS.forEach(s => counts[s] = 0);
+        
+        // Also prepare list rows for the detailed table
+        const parkingRows = [];
+        const carIdx = data.headers.findIndex(h => h.name === '車號');
+        const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+
         data.rows.forEach(r => {
           const val = (r[colIdx] || '').trim();
           if(counts[val] !== undefined) counts[val]++;
+          
+          // Collect data for detailed table if value exists (and not - or Skip)
+          if(val && val !== '-' && val !== 'Skip') {
+              parkingRows.push({
+                  car: r[carIdx],
+                  area: r[areaIdx],
+                  loc: val,
+                  time: '-' // Placeholder as time is not in this cell, but column is required
+              });
+          }
         });
+        
         STOP_OPTIONS.forEach(loc => {
           const card = document.createElement('div');
           card.className = 'loc-card';
@@ -617,6 +640,29 @@
           locContainer.appendChild(card);
         });
         wrapper.appendChild(locContainer);
+        
+        // 2. Detailed Parking Table (New Requirement)
+        if (parkingRows.length > 0) {
+             const detailBox = document.createElement('div');
+             detailBox.className = 'stat-card'; 
+             detailBox.style.padding = '12px';
+             
+             let html = `<div class="dash-title" style="color:${cfg.color}; border-color:${cfg.color}; margin-top:0;">${parkingStep} 列表</div>
+             <table class="summary-table">
+               <tr><th>車號</th><th>區域</th><th>地點</th><th>時間</th></tr>`;
+             
+             parkingRows.forEach(r => {
+               html += `<tr>
+                 <td style="font-weight:800;">${r.car}</td>
+                 <td style="font-weight:800; color:#333;">${r.area}</td>
+                 <td class="summary-loc">${r.loc}</td>
+                 <td class="summary-time">${r.time}</td>
+               </tr>`;
+             });
+             html += '</table>';
+             detailBox.innerHTML = html;
+             wrapper.appendChild(detailBox);
+        }
       }
 
       if(outbound.length > 0) {
@@ -662,7 +708,12 @@
     <table class="summary-table">
       <tr><th>車號</th><th>區域</th><th>地點</th><th>時間</th></tr>`;
     rows.forEach(r => {
-      html += `<tr><td>${r.car}</td><td>${r.area}</td><td>${r.station}</td><td>${r.time}</td></tr>`;
+      html += `<tr>
+        <td style="font-weight:800;">${r.car}</td>
+        <td style="font-weight:800; color:#333;">${r.area}</td>
+        <td class="summary-loc">${r.station}</td>
+        <td class="summary-time">${r.time}</td>
+      </tr>`;
     });
     html += '</table>';
     box.innerHTML = html;
@@ -849,7 +900,8 @@
         if(!isViewer) {
           const sel = document.createElement('select');
           sel.className = 'sheet-select';
-          sel.innerHTML = `<option value="">---- 清除 ----</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
+          // UPDATED: Default option changed to 12 dashes
+          sel.innerHTML = `<option value="">------------</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
           right.appendChild(sel);
         } else {
@@ -912,7 +964,6 @@
     const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
     const carIdx = data.headers.findIndex(h => h.name === '車號');
     
-    // Ensure we find the specific "Area/Sequence" column, just like in renderList
     let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
     if (areaIdx === -1) areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
 
@@ -927,7 +978,6 @@
         currentVehicles.forEach(r => {
             const div = document.createElement('div');
             div.className = 'loc-list-item';
-            // CHANGED: Display Order: CarNo + Area
             div.innerHTML = `
                 <div class="loc-list-txt">${r[carIdx]} ${r[areaIdx]}</div>
                 <button class="btn-remove-loc" onclick="doAssignLoc('${sheetKey}', '${r[carIdx]}', '${parkingField}', '')">移除</button>
@@ -952,7 +1002,6 @@
         sel.id = 'selAddLocCar';
         sel.className = 'sheet-select';
         sel.style.marginBottom = '12px';
-        // CHANGED: Display Order: CarNo + Area
         sel.innerHTML = `<option value="">請選擇車輛</option>` + 
             candidates.map(r => `<option value="${r[carIdx]}">${r[carIdx]} ${r[areaIdx]}</option>`).join('');
         
