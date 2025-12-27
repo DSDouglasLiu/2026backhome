@@ -60,7 +60,7 @@
       box-shadow: 0 0 30px rgba(0,0,0,0.1); padding-bottom: 80px; 
     }
 
-    .container { padding: 12px; } /* Slightly tighter padding for mobile */
+    .container { padding: 12px; }
 
     /* =========================================
        2. Header (Sticky & Consolidated)
@@ -69,23 +69,30 @@
       background: var(--bg-surface); 
       position: sticky; top: 0; z-index: var(--z-header);
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      padding-bottom: 8px; /* Give some space for the bottom row */
+      padding-bottom: 8px; 
     }
 
-    /* Top Row: Title | Clock | Refresh | Logout */
+    /* Top Row Layout */
     .header-main {
       padding: 12px 16px 8px 16px;
-      display: grid;
-      /* Left (Title) | Center (Time) | Right (Controls) */
-      grid-template-columns: 1fr auto 1fr;
+      display: flex;
+      justify-content: space-between;
       align-items: center; gap: 8px;
     }
 
+    /* Desktop Elements (Hidden on Mobile) */
+    .desktop-only { display: block; }
+    
+    /* Mobile Elements (Hidden on Desktop) */
+    .mobile-only { display: none; }
+
+    /* App Title (Desktop) */
     .app-title { 
       font-size: 1.1rem; font-weight: 800; color: var(--c-brand); 
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
+    /* Clock (Desktop) */
     .header-clock { 
       font-family: monospace; 
       font-size: 1.1rem; font-weight: 800; 
@@ -94,7 +101,7 @@
 
     .header-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 
-    /* Refresh Buttons */
+    /* Refresh Buttons (Desktop) */
     .refresh-ctrl { display: flex; background: #f1f5f9; padding: 2px; border-radius: var(--radius-pill); }
     .refresh-btn { 
       border: none; background: transparent; padding: 4px 8px; 
@@ -103,13 +110,46 @@
     }
     .refresh-btn.active { background: #fff; color: var(--c-brand); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Logout Button */
+    /* Standard Logout Button (Desktop) */
     .btn-logout {
       background: var(--c-dark); color: #fff; border: none; padding: 6px 12px;
       border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
 
-    /* Level 1 Navigation (Big Pills) - 整體情報 / 登錄與修改 */
+    /* --- MOBILE SPECIFIC HEADER STYLES --- */
+    /* New Mobile Header Buttons (Update / Logout) */
+    .btn-header-pill {
+      background: #f1f5f9; 
+      color: var(--c-dark); 
+      border: 1px solid transparent; 
+      padding: 8px 16px; 
+      border-radius: var(--radius-pill); 
+      font-size: 0.9rem; 
+      font-weight: 700; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      gap: 4px;
+      transition: 0.2s;
+    }
+    .btn-header-pill:active { background: #e2e8f0; }
+
+    /* Mobile Breakpoint for Header */
+    @media (max-width: 767px) {
+      /* Hide Desktop Elements */
+      .desktop-only, .app-title, .header-clock, .refresh-ctrl, .btn-logout { 
+        display: none !important; 
+      }
+      /* Show Mobile Elements */
+      .mobile-only { display: flex !important; }
+      
+      .header-main {
+        /* Ensure visual spread */
+        justify-content: space-between;
+      }
+    }
+
+    /* Level 1 Navigation (Big Pills) */
     .nav-tabs-wrapper {
       display: flex; gap: 10px; padding: 0 16px 8px 16px; justify-content: center;
     }
@@ -121,25 +161,22 @@
     }
     .nav-tab.active { background: var(--c-brand); color: #fff; border-color: var(--c-brand); box-shadow: 0 2px 6px rgba(31, 111, 229, 0.3); }
 
-    /* Level 2 Navigation (Scrollable Pills) - 全部情報 / 各路線按鈕 */
+    /* Level 2 Navigation (Scrollable Pills) */
     .nav-scroll-container {
       display: flex; gap: 8px; overflow-x: auto; 
       padding: 4px 16px 8px 16px;
-      -webkit-overflow-scrolling: touch; /* iOS Scroll Momentum */
+      -webkit-overflow-scrolling: touch; 
       background: var(--bg-surface);
-      /* Hide Scrollbar visually but keep functionality */
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none;  /* IE 10+ */
+      scrollbar-width: none; 
+      -ms-overflow-style: none;
     }
-    .nav-scroll-container::-webkit-scrollbar { 
-      display: none; /* Chrome/Safari/Webkit */
-    }
+    .nav-scroll-container::-webkit-scrollbar { display: none; }
 
     .filter-btn {
       padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid transparent;
       font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer;
       background: #fff; color: var(--text-sub); border-color: var(--border);
-      transition: 0.2s; flex-shrink: 0; /* Prevent shrinking */
+      transition: 0.2s; flex-shrink: 0;
     }
     
     /* =========================================
@@ -165,29 +202,36 @@
       border: 1px solid transparent;
     }
     .stat-box:active { background: #e2e8f0; }
-    .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; } /* Big Number */
+    .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; }
     .stat-lbl { font-size: 0.8rem; color: var(--text-sub); margin-top: 4px; font-weight: 600; }
     .num-done { color: var(--c-brand); }
     .num-todo { color: var(--c-danger); }
 
-    /* Location Cards (Peeking & Grid) */
+    /* Location Cards (Default / Mobile Optimized) */
     .loc-container {
-      display: flex; gap: 10px; padding-bottom: 8px; 
-      overflow-x: auto; scroll-snap-type: x mandatory;
+      /* Mobile: 2-Column Grid, No Scrolling */
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding-bottom: 8px;
     }
     .loc-card {
-      /* Mobile: 42% width ensures ~2.2 cards visible (Peeking effect) */
-      flex: 0 0 42%; min-width: 120px; 
+      min-width: auto;
       background: var(--bg-surface); border: 1px solid var(--border);
       border-radius: var(--radius-md); padding: 12px; text-align: center; 
-      scroll-snap-align: start; cursor: pointer;
-      transition: 0.2s;
+      cursor: pointer; transition: 0.2s;
     }
     .loc-card:active { transform: scale(0.98); background: #f1f5f9; }
+    
+    /* Desktop Override */
     @media (min-width: 768px) {
-      .loc-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; overflow-x: visible; }
-      .loc-card { flex: unset; min-width: auto; }
+      .loc-container { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); /* 3 Cols on Desktop */
+        gap: 12px; 
+      }
     }
+    
     .loc-name { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
     .loc-val { font-size: 1.5rem; font-weight: 800; color: var(--c-brand); }
 
@@ -197,7 +241,7 @@
     .summary-table th { color: var(--text-sub); font-weight: 600; font-size: 0.85rem; }
     .summary-table tr:last-child td { border-bottom: none; }
     .summary-table td { color: var(--text-main); font-weight: 500; }
-    /* Styles for the Dynamic Station List */
+    
     .summary-time { font-family: monospace; color: var(--text-sub); }
     .summary-loc { color: var(--c-brand); font-weight: 700; }
 
@@ -228,14 +272,12 @@
     }
     .veh-card:active { transform: scale(0.98); background-color: #f8fafc; }
 
-    /* Left Column Stack (Vehicle Info) */
     .veh-col-left { 
         display: flex; flex-direction: column; gap: 4px; 
         overflow: hidden;
         border-right: 1px solid transparent; 
     }
     
-    /* Typography: Both Bold & Large */
     .txt-car { 
         font-size: 1.15rem; font-weight: 800; color: #000; line-height: 1.2; 
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -248,22 +290,18 @@
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     
-    /* Middle Column Stack (Status) */
     .veh-col-mid { display: flex; flex-direction: column; gap: 2px; }
     .status-row { font-size: 0.95rem; font-weight: 700; color: var(--c-brand); line-height: 1.3; }
     .status-sep { border-top: 1px dashed #cbd5e1; margin: 4px 0; width: 100%; opacity: 0.5; }
     .status-pending { color: var(--c-neutral); font-weight: 500; }
-    /* Dynamic status style */
     .status-dynamic { font-size: 0.9rem; font-weight: 600; color: var(--c-brand-dark); }
 
-    /* Expand Button (+) */
     .btn-expand {
       width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
       background: #eff6ff; color: var(--c-brand); border-radius: 8px; 
       font-weight: 800; font-size: 20px; border: 1px solid #dbeafe;
     }
 
-    /* Completed State */
     .veh-card.completed {
       background-color: var(--bg-success-light);
       border-color: var(--border-success);
@@ -279,7 +317,7 @@
     .filter-clear { text-decoration: underline; cursor: pointer; font-weight: 700; }
 
     /* =========================================
-       5. Bottom Sheet (Three Column Grid)
+       5. Bottom Sheet
        ========================================= */
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: var(--z-overlay); backdrop-filter: blur(2px); }
     .bottom-sheet {
@@ -296,10 +334,8 @@
     .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .sheet-title { font-size: 1.4rem; font-weight: 800; color: #000; }
     
-    /* 3-Column Grid: Label | Time | Buttons */
     .action-row { 
       display: grid; 
-      /* Label | Time (Center) | Buttons (Right) */
       grid-template-columns: 130px 1fr auto; 
       align-items: center; 
       padding: 12px 0; 
@@ -311,7 +347,6 @@
     .action-mid { text-align: center; } 
     .action-right { display: flex; justify-content: flex-end; } 
 
-    /* Time & Status Colors */
     .action-time { font-family: monospace; font-size: 1rem; font-weight: 700; color: var(--c-brand); }
     .action-skip { font-size: 0.95rem; color: var(--c-brand); font-weight: 700; }
 
@@ -327,13 +362,12 @@
     .btn-solid:active { opacity: 0.8; }
     
     .btn-do     { background: var(--c-brand); }
-    .btn-skip   { background: var(--c-neutral); } /* Gray */
+    .btn-skip   { background: var(--c-neutral); }
     .btn-mod    { background-color: var(--c-success); }
     .btn-del    { background-color: var(--c-danger); }
     
     .sheet-select { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; font-weight: 500; width: 100%; }
     
-    /* Location Management List Styles */
     .loc-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
     .loc-list-txt { font-size: 1rem; font-weight: 700; color: var(--text-main); }
     .btn-remove-loc { 
@@ -341,7 +375,6 @@
       background: var(--c-danger); padding: 6px 12px; border-radius: 6px; border:none; 
     }
 
-    /* Loading & Login */
     #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
     .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--c-brand); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -365,11 +398,17 @@
 <div id="appView" class="hidden">
   <header class="app-header">
     <div class="header-main">
-        <div class="app-title">2026水陸法會退場</div>
-        <div class="header-clock" id="headerClock">--:--:--</div>
+        <button class="btn-header-pill mobile-only" onclick="loadAllData(true)">🔄 更新</button>
+
+        <div class="app-title desktop-only">2026水陸法會退場</div>
+        <div class="header-clock desktop-only" id="headerClock">--:--:--</div>
+
         <div class="header-right">
-        <div class="refresh-ctrl" id="refreshCtrl"></div>
-        <button class="btn-logout" onclick="logout()">登出</button>
+             <div class="refresh-ctrl desktop-only" id="refreshCtrl"></div>
+            
+            <button class="btn-header-pill mobile-only" onclick="logout()">登出 ↪</button>
+            
+            <button class="btn-logout desktop-only" onclick="logout()">登出</button>
         </div>
     </div>
     
@@ -438,6 +477,7 @@
   ];
 
   const STOP_OPTIONS = ['🅿️ 禪堂平台','🅿️ 法心北路','🅿️ 法心南路（西）','🅿️ 法心南路（東）','🅿️ 法大路','🅿️ 雙環路至法大一橋'];
+  // Keep desktop refresh options, but logic will set default 20s
   const REFRESH_OPTIONS = [{ label:'5分', ms:300000 }, { label:'2分', ms:120000 }, { label:'60秒', ms:60000 }, { label:'30秒', ms:30000 }];
 
   let currentUser = null;
@@ -446,7 +486,8 @@
   let currentDashFilter = 'ALL';
   let activeFilter = null;
   let refreshTimer = null;
-  let refreshMs = 60000;
+  // Default refresh 20s for mobile priority as requested
+  let refreshMs = 20000;
 
   function handleCredentialResponse(response) {
     const payload = JSON.parse(decodeURIComponent(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
@@ -473,12 +514,17 @@
 
     const isMobile = window.innerWidth < 768;
     const isPowerUser = currentUser.permission === 'ADMIN';
-    if(isPowerUser && !isMobile) refreshMs = 30000; 
-    else if(isMobile) refreshMs = 60000; 
-    else refreshMs = 120000; 
+    
+    // Logic: Power User Desktop = 30s, Mobile = 20s (requested), Desktop = 120s
+    if (isMobile) {
+        refreshMs = 20000;
+    } else if (isPowerUser) {
+        refreshMs = 30000;
+    } else {
+        refreshMs = 120000;
+    }
     
     renderRefreshCtrl();
-    // Initially render Nav for Dash
     renderNavButtons();
     loadAllData(true);
     startTimer();
@@ -521,7 +567,6 @@
     box.innerHTML = '';
     const isDash = !document.getElementById('tabDash').classList.contains('hidden');
     
-    // 1. "All Info" Button (Only shown in Dashboard mode)
     if (isDash) {
         const allBtn = document.createElement('button');
         const isAllActive = currentDashFilter === 'ALL';
@@ -540,10 +585,8 @@
         box.appendChild(allBtn);
     }
 
-    // 2. Sheet Buttons (Always shown, logic differs slightly)
     SHEET_CONFIGS.forEach(cfg => {
       const btn = document.createElement('button');
-      // Determine Active State
       let isActive = false;
       if (isDash) {
           isActive = currentDashFilter === cfg.key;
@@ -568,10 +611,10 @@
             renderDashboard();
         } else {
             currentSheetName = cfg.key;
-            activeFilter = null; // Clear filter when switching sheets
+            activeFilter = null;
             renderList();
         }
-        renderNavButtons(); // Re-render to update active styling
+        renderNavButtons();
       };
       box.appendChild(btn);
     });
@@ -601,9 +644,8 @@
 
       inbound.forEach(step => wrapper.appendChild(createStatCard(step, data, cfg)));
 
-      // Location Stats Only (Detailed list removed as requested)
+      // Location Stats Only (2-Col on Mobile)
       if(parkingStep) {
-        // Stats Grid
         const locContainer = document.createElement('div');
         locContainer.className = 'loc-container';
         const colIdx = data.headers.findIndex(h => h.name === parkingStep);
@@ -619,7 +661,6 @@
           const card = document.createElement('div');
           card.className = 'loc-card';
           card.innerHTML = `<div class="loc-name">${loc}</div><div class="loc-val">${counts[loc]}</div>`;
-          // Click to Manage Location
           if(currentUser.permission === 'ADMIN' || currentUser.permission === 'LEADER') {
              card.onclick = () => openLocationSheet(loc, cfg.key);
           }
@@ -651,10 +692,8 @@
     const rows = [];
     const carIdx = data.headers.findIndex(h => h.name === '車號');
     
-    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
     let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
     if (areaIdx === -1) {
-       // Look for area, BUT EXPLICITLY exclude '編號' (ID)
        areaIdx = data.headers.findIndex(h => h.name.includes('區域') && h.name !== '編號');
     }
 
@@ -679,7 +718,9 @@
     rows.forEach(r => {
       html += `<tr>
         <td style="font-weight:800; color:#000;">${r.car}</td>
-        <td style="font-weight:800; color:#000;">${r.area}</td> <td style="font-weight:700; color:#1f6fe5;">${r.station}</td> <td class="summary-time">${r.time}</td>
+        <td style="font-weight:800; color:#000;">${r.area}</td>
+        <td style="font-weight:700; color:#1f6fe5;">${r.station}</td>
+        <td class="summary-time">${r.time}</td>
       </tr>`;
     });
     html += '</table>';
@@ -722,14 +763,12 @@
     const header = data.headers;
     const carIdx = header.findIndex(h => h.name === '車號');
     
-    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
     let areaIdx = header.findIndex(h => h.name === '區域車次編號');
     if (areaIdx === -1) {
        areaIdx = header.findIndex(h => h.name.includes('區域') && h.name !== '編號');
     }
 
     let rows = data.rows;
-    // Apply Filter
     if(activeFilter) {
       document.getElementById('filterMsg').classList.remove('hidden');
       document.getElementById('filterText').textContent = `篩選: ${activeFilter.step} (${activeFilter.status === 'done' ? '完成' : '未完成'})`;
@@ -743,10 +782,8 @@
       document.getElementById('filterMsg').classList.add('hidden');
     }
 
-    // Prepare rows
     const cfg = SHEET_CONFIGS.find(s => s.key === currentSheetName);
     const renderItems = rows.map((row, idx) => {
-        // 1. Standard Progress & Latest Status
         let stdCompletedCount = 0;
         let latestStdTime = ''; 
         let displayStatus = null;
@@ -769,7 +806,6 @@
 
         if(!displayStatus) displayStatus = `<div class="status-row status-pending">尚未開始</div>`;
 
-        // 2. Dynamic Stations (Time > Latest Std Time)
         const dynamicHeaders = header.filter(h => h.isDynamic);
         let dynamicUpdates = [];
         
@@ -784,7 +820,6 @@
         });
         dynamicUpdates.sort((a, b) => a.time.localeCompare(b.time));
 
-        // 3. Construct Final HTML (Vertical Stack)
         let finalHtml = displayStatus;
         if(dynamicUpdates.length > 0) {
             finalHtml += `<div class="status-sep"></div>`;
@@ -797,7 +832,6 @@
         return { row, stdCompletedCount, finalHtml, isAllDone, originalIdx: idx };
     });
 
-    // Sort: Standard Progress (Low -> High), then Index
     renderItems.sort((a, b) => {
         if (a.stdCompletedCount !== b.stdCompletedCount) return a.stdCompletedCount - b.stdCompletedCount;
         return a.originalIdx - b.originalIdx;
@@ -871,7 +905,6 @@
         if(!isViewer) {
           const sel = document.createElement('select');
           sel.className = 'sheet-select';
-          // UPDATED: Clear Option as Dashes
           sel.innerHTML = `<option value="">------------</option>` + STOP_OPTIONS.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
           sel.onchange = () => doAction(row[carIdx], step, sel.value, true);
           right.appendChild(sel);
@@ -935,13 +968,11 @@
     const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
     const carIdx = data.headers.findIndex(h => h.name === '車號');
     
-    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
     let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
     if (areaIdx === -1) {
        areaIdx = data.headers.findIndex(h => h.name.includes('區域') && h.name !== '編號');
     }
 
-    // 1. Current Vehicles List
     const currentVehicles = data.rows.filter(r => (r[parkingIdx] || '').trim() === locName);
     
     body.innerHTML += `<div class="action-label" style="margin-bottom:8px;">現有車輛 (${currentVehicles.length})</div>`;
@@ -960,7 +991,6 @@
         });
     }
 
-    // 2. Add Vehicle Section (Admin/Leader only)
     const sep = document.createElement('div'); sep.className = 'dynamic-sep';
     const head = document.createElement('div'); head.className = 'dynamic-title'; head.textContent = '加入車輛';
     body.appendChild(sep);
@@ -1042,15 +1072,14 @@
       document.getElementById('tabOp').classList.remove('hidden');
       renderList(); 
     }
-    // Re-render buttons because "All Info" is only for Dash
     renderNavButtons();
   }
 
   function goToFilter(sheetKey, step, status) {
     currentSheetName = sheetKey;
     activeFilter = { step, status };
-    currentDashFilter = sheetKey; // Sync filter view
-    switchTab('op'); // This will trigger renderList() and renderNavButtons()
+    currentDashFilter = sheetKey; 
+    switchTab('op'); 
   }
 
   function clearFilter() { activeFilter = null; renderList(); }
