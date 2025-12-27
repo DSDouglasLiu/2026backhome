@@ -650,7 +650,10 @@
   function createSummaryTable(data, dynamicHeaders, cfg) {
     const rows = [];
     const carIdx = data.headers.findIndex(h => h.name === '車號');
-    const areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    
+    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
+    let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
+    if (areaIdx === -1) areaIdx = data.headers.findIndex(h => h.name.includes('區域'));
 
     data.rows.forEach(r => {
       dynamicHeaders.forEach(dh => {
@@ -672,7 +675,7 @@
       <tr><th>車號</th><th>區域</th><th>地點</th><th>時間</th></tr>`;
     rows.forEach(r => {
       html += `<tr>
-        <td style="font-weight:800;">${r.car}</td>
+        <td style="font-weight:800; color:#000;">${r.car}</td>
         <td style="font-weight:800; color:#000;">${r.area}</td> <td class="summary-loc">${r.station}</td> <td class="summary-time">${r.time}</td>
       </tr>`;
     });
@@ -715,6 +718,8 @@
     container.innerHTML = '';
     const header = data.headers;
     const carIdx = header.findIndex(h => h.name === '車號');
+    
+    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
     let areaIdx = header.findIndex(h => h.name === '區域車次編號');
     if (areaIdx === -1) areaIdx = header.findIndex(h => h.name.includes('區域'));
 
@@ -925,8 +930,9 @@
     const parkingIdx = data.headers.findIndex(h => h.name === parkingField);
     const carIdx = data.headers.findIndex(h => h.name === '車號');
     
+    // UPDATED: Priority logic for "Area" to avoid grabbing "ID" (編號)
     let areaIdx = data.headers.findIndex(h => h.name === '區域車次編號');
-    if (areaIdx === -1) areaIdx = data.headers.findIndex(h => h.name.includes('區域') || h.name.includes('編號'));
+    if (areaIdx === -1) areaIdx = data.headers.findIndex(h => h.name.includes('區域'));
 
     // 1. Current Vehicles List
     const currentVehicles = data.rows.filter(r => (r[parkingIdx] || '').trim() === locName);
